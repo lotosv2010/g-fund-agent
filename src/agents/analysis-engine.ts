@@ -20,7 +20,7 @@ export const analyzePortfolioTool = tool(
     const marketData = await calculateMarket(funds);
 
     // 第二步：规则匹配（判断是否触发补仓/止盈）
-    const ruleResults = matchRules(funds, marketData);
+    const ruleResults = await matchRules(funds, marketData);
 
     // 第三步：组合优化（生成具体建议 + 债券联动）
     const suggestions = optimizePortfolio(funds, ruleResults);

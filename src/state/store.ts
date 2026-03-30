@@ -1,12 +1,13 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { BuyPoint } from "./types";
+import type { BuyPoint, HighPoint, TriggeredTiers } from "./types";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, "../../data");
 const BUY_POINTS_FILE = join(DATA_DIR, "buy-points.json");
 const HIGH_POINTS_FILE = join(DATA_DIR, "high-points.json");
+const TRIGGERED_TIERS_FILE = join(DATA_DIR, "triggered-tiers.json");
 
 async function ensureDataDir() {
   try {
@@ -57,12 +58,56 @@ export async function addBuyPoint(point: BuyPoint) {
   await saveBuyPoints(points);
 }
 
-/** 读取近期高点记录 { [fundCode]: number } */
-export async function loadHighPoints(): Promise<Record<string, number>> {
-  return readJson<Record<string, number>>(HIGH_POINTS_FILE, {});
+/** 读取近期高点记录（支持旧格式向新格式迁移） */
+export async function loadHighPoints(): Promise<Record<string, HighPoint>> {
+  const data = await readJson<Record<string, number | HighPoint>>(HIGH_POINTS_FILE, {});
+
+  // 自动迁移旧格式 { code: number } → { code: { value: number, date: string } }
+  const migrated: Record<string, HighPoint> = {};
+  for (const [code, value] of Object.entries(data)) {
+    if (typeof value === "number") {
+      migrated[code] = { value, date: new Date().toISOString() };
+    } else {
+      migrated[code] = value;
+    }
+  }
+  return migrated;
 }
 
 /** 保存近期高点记录 */
-export async function saveHighPoints(points: Record<string, number>) {
+export async function saveHighPoints(points: Record<string, HighPoint>) {
   await writeJson(HIGH_POINTS_FILE, points);
+}
+
+/** 读取已触发档位记录 */
+export async function loadTriggeredTiers(): Promise<Record<string, TriggeredTiers>> {
+  return readJson<Record<string, TriggeredTiers>>(TRIGGERED_TIERS_FILE, {});
+}
+
+/** 保存已触发档位记录 */
+export async function saveTriggeredTiers(tiers: Record<string, TriggeredTiers>) {
+  await writeJson(TRIGGERED_TIERS_FILE, tiers);
+}
+
+/** 标记档位已触发 */
+export async function markTierTriggered(code: string, action: "buy" | "sell", tier: number) {
+  const tiers = await loadTriggeredTiers();
+  if (!tiers[code]) {
+    tiers[code] = {};
+  }
+  tiers[code][action] = tier;
+  await saveTriggeredTiers(tiers);
+}
+
+/** 清除基金的触发记录（当高点重置或完成交易后） */
+export async function clearTriggeredTiers(code: string, action?: "buy" | "sell") {
+  const tiers = await loadTriggeredTiers();
+  if (!tiers[code]) return;
+
+  if (action) {
+    delete tiers[code][action];
+  } else {
+    delete tiers[code];
+  }
+  await saveTriggeredTiers(tiers);
 }

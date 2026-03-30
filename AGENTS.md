@@ -20,9 +20,10 @@
 - 3 个纯计算函数（market-calculator / rule-matcher / portfolio-optimizer）已通过 `analysis-engine.ts` 接入主编排器
 - MCP 数据层已连通（qieman MCP，73 个工具）
 
-### 当前阶段：联调与规则完善
+### 当前阶段：Phase 1 - 数据丰富 + 风控层
 
-开发规划和进度见 `docs/PLAN.md`。
+- Phase 0 已完成：规则引擎稳定运行，核心功能齐全
+- 开发规划和进度见 `docs/PLAN.md`
 
 ## 3. 技术栈与运行方式
 
@@ -67,14 +68,15 @@ g-fund-agent/
 │   │   └── fund-registry.ts       # 12 只基金注册表（代码/名称/分类）
 │   ├── state/
 │   │   ├── types.ts               # 业务类型定义
-│   │   └── store.ts               # JSON 状态读写（补仓点、近期高点）
+│   │   └── store.ts               # JSON 状态读写（补仓点、近期高点、已触发档位）
 │   ├── mcp/
 │   │   └── client.ts              # qieman MCP 客户端 + mcpServers 配置
 │   └── utils/
 │       └── calc.ts                # 涨跌幅计算、格式化、周标识工具
 ├── data/
 │   ├── buy-points.json            # 补仓点记录（运行时写入）
-│   └── high-points.json           # 近期高点记录（运行时写入）
+│   ├── high-points.json           # 近期高点记录（运行时写入）
+│   └── triggered-tiers.json       # 已触发档位记录（运行时写入）
 ├── docs/                          # 项目文档（见第 9 节）
 ├── langgraph.json                 # langgraphjs CLI 配置
 ├── .env                           # 环境变量（不提交）
@@ -165,9 +167,11 @@ const tools = await getMcpTools("qieman");
 ### 7.1 业务约束
 
 1. **纯规则驱动** — 所有买卖决策必须由 `rules-config.ts` 中的规则触发，LLM 只用于数据获取和报告格式化
-2. **补仓点必须持久化** — 每次补仓操作记录到 `data/buy-points.json`，止盈规则依赖此数据
-3. **净值检查必输出** — 每次运行必须输出净值检查表，无论是否触发操作
-4. **债券弹药库联动** — 其他资产触发第 3 档补仓时，自动触发债券减仓
+2. **补仓点必须持久化** — 每次补仓操作记录到 `data/buy-points.json`，止盈规则依赖加权平均补仓成本
+3. **档位去重** — 已触发档位记录到 `data/triggered-tiers.json`，避免重复触发同一档位
+4. **滚动窗口高点** — 近期高点采用60日滚动窗口，超过60天未创新高则自动重置
+5. **净值检查必输出** — 每次运行必须输出净值检查表，无论是否触发操作
+6. **债券弹药库联动** — 其他资产触发第 3 档补仓时，自动触发债券减仓
 
 ### 7.2 架构约束
 

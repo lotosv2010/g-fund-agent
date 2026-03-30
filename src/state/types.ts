@@ -55,3 +55,15 @@ export interface Suggestion {
   amount: number;
   reason: string;
 }
+
+/** 近期高点记录（60日滚动窗口） */
+export interface HighPoint {
+  value: number;      // 高点净值
+  date: string;       // 记录日期（ISO 8601）
+}
+
+/** 已触发档位记录（防止重复触发） */
+export interface TriggeredTiers {
+  buy?: number;       // 最后触发的补仓档位（1/2/3）
+  sell?: number;      // 最后触发的止盈档位（1/2/3）
+}

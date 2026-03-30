@@ -4,13 +4,16 @@
 
 **核心原则：纯规则驱动，禁止 LLM 主观判断。**
 
-## 功能
+## 核心功能
 
-- 通过 MCP 接口实时获取基金净值数据
-- 按 5 类资产（宽基、科技、海外、债券、黄金）分别执行补仓/止盈规则
-- 自动生成净值检查表、调仓建议、仓位偏离分析
-- 支持债券弹药库联动（深度下跌时自动触发债券减仓补仓）
-- 所有决策可通过 LangSmith 追踪审计
+- **纯规则驱动**: 所有买卖决策由配置规则触发，LLM 仅用于数据获取和报告生成
+- **多源数据**: 通过 MCP 接口实时获取基金净值数据（qieman / 且慢）
+- **分类策略**: 按 5 类资产（宽基、科技、海外、债券、黄金）分别执行补仓/止盈规则
+- **智能高点**: 60日滚动窗口，超过60天未创新高自动重置，避免长期横盘导致规则失效
+- **精准止盈**: 按所有补仓点的加权平均成本计算止盈基准，多次补仓时更准确
+- **档位去重**: 同一档位不会重复触发，只有更高档位或状态重置后才会再次触发
+- **债券弹药库**: 深度下跌时自动触发债券减仓为补仓提供资金
+- **全程追踪**: 所有决策可通过 LangSmith 追踪审计
 
 ## 目标仓位
 
@@ -60,10 +63,20 @@ src/
 ├── agent.ts              # DeepAgent 主编排器（入口）
 ├── models.ts             # LLM 模型配置
 ├── agents/               # 子 Agent 和纯计算函数
+│   ├── analysis-engine.ts     # 分析引擎（规则管道入口）
+│   ├── market-calculator.ts   # 市场计算（高点、涨跌幅）
+│   ├── rule-matcher.ts        # 规则匹配（档位触发判断）
+│   └── portfolio-optimizer.ts # 组合优化（建议生成）
 ├── rules/                # 规则配置 + 基金注册表
-├── state/                # 类型定义 + 状态读写
+├── state/                # 类型定义 + 状态存储
+│   └── store.ts              # 补仓点、高点、触发档位持久化
 ├── mcp/                  # qieman MCP 客户端
 └── utils/                # 工具函数
+
+data/                     # 运行时状态（已加入 .gitignore）
+├── buy-points.json       # 补仓点记录
+├── high-points.json      # 近期高点记录
+└── triggered-tiers.json  # 已触发档位记录
 ```
 
 ## 文档
@@ -72,10 +85,11 @@ src/
 |------|------|
 | [AGENTS.md](./AGENTS.md) | 项目开发规范（AI 开发工具共用） |
 | [docs/USAGE.md](./docs/USAGE.md) | 使用说明和操作步骤 |
+| [docs/TESTING.md](./docs/TESTING.md) | 联调测试指南 |
 | [docs/spec/SPEC.md](./docs/spec/SPEC.md) | 完整需求规格 |
 | [docs/HOME.md](./docs/HOME.md) | 操作首页（持仓总览、规则速查） |
 | [docs/PLAN.md](./docs/PLAN.md) | 开发规划和进度 |
-| [docs/portfolio.md](./docs/portfolio.md) | 当前持仓数据 |
+| [docs/portfolio.md](./docs/portfolio.md) | 当前持仓数据（自动更新） |
 
 ## 常用命令
 

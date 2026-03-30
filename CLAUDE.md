@@ -19,6 +19,10 @@
 | 改补仓/止盈阈值 | `src/rules/rules-config.ts` |
 | 改 Agent 编排 | `src/agent.ts` |
 | 改分析引擎 | `src/agents/analysis-engine.ts`（三个纯计算函数的入口） |
+| 改市场计算逻辑 | `src/agents/market-calculator.ts`（高点、涨跌幅计算） |
+| 改规则匹配逻辑 | `src/agents/rule-matcher.ts`（补仓/止盈档位判断） |
+| 改组合优化逻辑 | `src/agents/portfolio-optimizer.ts`（建议生成、债券联动） |
+| 改状态存储 | `src/state/store.ts`（补仓点、高点、触发档位） |
 | 改子 Agent | `src/agents/data-fetcher.ts` 或 `reporter.ts` |
 | 改 MCP 配置 | `src/mcp/client.ts` |
 | 改 LLM 模型 | `src/models.ts` |
