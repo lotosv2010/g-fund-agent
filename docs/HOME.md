@@ -47,6 +47,7 @@
 | [USAGE.md](./USAGE.md) | 安装、启动、操作步骤 |
 | [TESTING.md](./TESTING.md) | 联调测试指南（Phase 0） |
 | [SCHEDULING.md](./SCHEDULING.md) | 定时运行配置（Phase 1） |
+| [STRATEGY-GUIDE.md](./STRATEGY-GUIDE.md) | **策略使用指南（Phase 2）** |
 | [spec/SPEC.md](./spec/SPEC.md) | 完整需求规格、规则定义 |
 | [portfolio.md](./portfolio.md) | 当前持仓明细（自动更新） |
 | [reports/](./reports/) | 持仓快照、分析报告、调仓建议 |

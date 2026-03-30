@@ -20,10 +20,11 @@
 - 3 个纯计算函数（market-calculator / rule-matcher / portfolio-optimizer）已通过 `analysis-engine.ts` 接入主编排器
 - MCP 数据层已连通（qieman MCP，73 个工具）
 
-### 当前阶段：Phase 2 - 策略抽象层
+### 当前阶段：Phase 3 - 回测 + 自优化
 
 - Phase 0 已完成：规则引擎稳定运行，核心功能齐全
 - Phase 1 已完成：数据聚合 + 三层风控体系 + 定时触发
+- Phase 2 已完成：策略抽象层 + LLM 信号增强 + 信号合并
 - 开发规划和进度见 `docs/PLAN.md`
 
 ## 3. 技术栈与运行方式
@@ -83,6 +84,13 @@ g-fund-agent/
 │   │   └── liquidity.ts           # 流动性检查
 │   ├── scheduler/                 # 定时任务（Phase 1）
 │   │   └── config.ts              # Cron 配置
+│   ├── strategies/                # 策略层（Phase 2）
+│   │   ├── types.ts               # 策略类型定义
+│   │   ├── registry.ts            # 策略注册表
+│   │   ├── grid-rebalance.ts      # 网格补仓策略
+│   │   ├── llm-signal.ts          # LLM 信号增强
+│   │   ├── version-manager.ts     # 策略版本管理
+│   │   └── index.ts               # 统一导出
 │   ├── mcp/
 │   │   └── client.ts              # qieman MCP 客户端 + mcpServers 配置
 │   └── utils/
@@ -134,6 +142,10 @@ OLLAMA_BASE_URL=http://localhost:11434
 # qieman MCP
 QIEMAN_MCP_URL=https://stargate.yingmi.com/mcp/v2
 QIEMAN_API_KEY=<your_key>
+
+# Phase 2: 策略引擎（可选）
+USE_STRATEGY_ENGINE=false  # true: 启用策略驱动引擎（V2）
+ENABLE_LLM_SIGNAL=false    # true: 启用 LLM 信号增强
 ```
 
 ### 5.3 子 Agent 规格格式

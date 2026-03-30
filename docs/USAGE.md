@@ -54,9 +54,19 @@ OLLAMA_BASE_URL=http://localhost:11434
 QIEMAN_MCP_URL=https://stargate.yingmi.com/mcp/v2
 QIEMAN_API_KEY=<你的且慢 API Key>
 
+# Phase 2: 策略引擎配置（可选）
+USE_STRATEGY_ENGINE=false  # true: 启用策略驱动分析引擎（V2）, false: 使用规则引擎（V1）
+ENABLE_LLM_SIGNAL=false    # true: 启用 LLM 信号增强（需配合 USE_STRATEGY_ENGINE=true）
+
 # 自定义基金列表（可选）
 # FUND_LIST_PATH=/path/to/your-funds.md  # 不设置则默认从 docs/portfolio.md 读取
 ```
+
+**关于策略引擎配置：**
+- **V1 引擎（默认）**：规则驱动，所有决策基于 `rules-config.ts` 中的固定规则
+- **V2 引擎（可选）**：策略驱动，支持多策略并行、LLM 信号增强、策略版本管理
+- **LLM 信号增强**：基于市场环境调整规则信号强度（调整系数 0.5-2.0），需开启 V2 引擎
+- 详细说明见 [STRATEGY-GUIDE.md](./STRATEGY-GUIDE.md)
 
 ### 1.5 验证配置
 
@@ -103,9 +113,27 @@ pnpm dev
 
 输入后，Agent 会按以下流程自动执行：
 
+**V1 引擎流程（默认）：**
+
 ```
 1. [data_fetcher] 通过 MCP 逐一获取 12 只基金的最新净值
-2. [主编排器]     根据规则判断是否触发补仓/止盈
+2. [analysis-engine] 规则驱动分析：
+   - 市场计算：计算近期高点、涨跌幅
+   - 规则匹配：判断是否触发补仓/止盈
+   - 组合优化：生成调仓建议、债券联动
+   - 风控检查：回撤、集中度、流动性
+3. [reporter]     格式化周报并保存到 docs/reports/
+```
+
+**V2 引擎流程（可选，设置 `USE_STRATEGY_ENGINE=true`）：**
+
+```
+1. [data_fetcher] 通过 MCP 逐一获取 12 只基金的最新净值
+2. [analysis-engine-v2] 策略驱动分析：
+   - 市场计算：计算近期高点、涨跌幅
+   - 策略执行：运行所有已注册策略（grid-rebalance, llm-signal）
+   - 信号合并：合并多策略信号（规则 70% + LLM 30%）
+   - 风控检查：回撤、集中度、流动性
 3. [reporter]     格式化周报并保存到 docs/reports/
 ```
 

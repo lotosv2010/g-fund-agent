@@ -20,6 +20,12 @@
 - **三层风控**: 回撤控制 + 集中度检查 + 流动性预警
 - **风险阻断**: 自动阻止超过止损线或高风险的建议
 - **定时触发**: 支持 cron 定时运行（双周周四/每月13号/自定义）
+
+### Phase 2：策略抽象层
+- **可插拔策略**: 策略注册表，支持多策略并行运行
+- **LLM 信号增强**: 基于市场环境调整规则信号强度（可选）
+- **信号合并**: 规则信号 + LLM 信号协同，加权平均置信度
+- **策略版本管理**: 自动存档策略配置，参数变更可追溯
 - **全程追踪**: 所有决策可通过 LangSmith 追踪审计
 
 ## 目标仓位
@@ -43,6 +49,7 @@ pnpm install
 # 2. 配置环境变量
 cp .env.example .env
 # 编辑 .env 填入你的 API Key
+# 可选：设置 USE_STRATEGY_ENGINE=true 启用策略引擎（V2）
 
 # 3. 启动开发服务器
 pnpm dev
@@ -90,6 +97,13 @@ src/
 │   └── liquidity.ts          # 流动性检查
 ├── scheduler/            # 定时任务（Phase 1）
 │   └── config.ts             # Cron 配置
+├── strategies/           # 策略层（Phase 2）
+│   ├── types.ts              # 策略类型定义
+│   ├── registry.ts           # 策略注册表
+│   ├── grid-rebalance.ts     # 网格补仓策略
+│   ├── llm-signal.ts         # LLM 信号增强
+│   ├── version-manager.ts    # 策略版本管理
+│   └── index.ts              # 统一导出
 ├── mcp/                  # qieman MCP 客户端
 └── utils/                # 工具函数
 
@@ -109,6 +123,7 @@ data/                     # 运行时状态（已加入 .gitignore）
 | [docs/USAGE.md](./docs/USAGE.md) | 使用说明和操作步骤 |
 | [docs/TESTING.md](./docs/TESTING.md) | 联调测试指南（Phase 0） |
 | [docs/SCHEDULING.md](./docs/SCHEDULING.md) | 定时运行配置指南（Phase 1） |
+| [docs/STRATEGY-GUIDE.md](./docs/STRATEGY-GUIDE.md) | **策略使用指南（Phase 2）** |
 | [docs/spec/SPEC.md](./docs/spec/SPEC.md) | 完整需求规格 |
 | [docs/HOME.md](./docs/HOME.md) | 操作首页（持仓总览、规则速查） |
 | [docs/portfolio.md](./docs/portfolio.md) | 当前持仓数据（自动更新） |

@@ -6,6 +6,7 @@ import { getMcpTools } from "./mcp/client";
 import { dataFetcherSpec } from "./agents/data-fetcher";
 import { reporterSpec } from "./agents/reporter";
 import { analyzePortfolioTool } from "./agents/analysis-engine";
+import { analyzePortfolioV2Tool } from "./agents/analysis-engine-v2";
 import { loadFundList } from "./utils/fund-loader";
 import { validateConfig, printValidationResult } from "./utils/config-validator";
 
@@ -24,6 +25,12 @@ async function createFundAgent() {
   const fundRegistry = await loadFundList();
   const fundCodes = fundRegistry.map((f) => f.code).join("、");
 
+  // Phase 2: 支持策略驱动的分析引擎（通过环境变量启用）
+  const useV2Engine = process.env.USE_STRATEGY_ENGINE === "true";
+  const analysisTools = useV2Engine
+    ? [analyzePortfolioV2Tool]
+    : [analyzePortfolioTool];
+
   const SYSTEM_PROMPT = `你是基金持仓分析编排器。你必须严格按照以下流程执行，禁止跳过任何步骤。
 
 ## 强制执行流程
@@ -36,11 +43,12 @@ ${fundCodes}
 如果你没有调用工具就给出了净值数据，那就是错误的。
 
 ### 第二步：分析数据（必须执行）
-使用 analyze_portfolio 工具分析获取到的基金数据。
-该工具是确定性规则引擎，会自动执行以下计算：
+使用 ${useV2Engine ? "analyze_portfolio_v2" : "analyze_portfolio"} 工具分析获取到的基金数据。
+${useV2Engine ? "该工具是策略驱动的分析引擎，支持多策略并行和 LLM 信号增强（可选）。" : "该工具是确定性规则引擎，会自动执行以下计算："}
 - 市场计算：计算近期高点、跌幅、涨幅
-- 规则匹配：判断是否触发补仓/止盈
-- 组合优化：生成调仓建议、债券联动
+- ${useV2Engine ? "策略执行：运行所有已注册的策略" : "规则匹配：判断是否触发补仓/止盈"}
+- ${useV2Engine ? "信号合并：合并多个策略的信号" : "组合优化：生成调仓建议、债券联动"}
+- 风控检查：回撤、集中度、流动性检查
 
 你只需要将第一步获取的基金数据传入此工具，不需要也不允许做任何主观判断。
 
@@ -55,9 +63,16 @@ ${fundCodes}
 
   const qiemanTools = await getMcpTools("qieman");
 
+  if (useV2Engine) {
+    console.log("[agent] ✅ 使用策略驱动的分析引擎（V2）");
+  } else {
+    console.log("[agent] ℹ️  使用规则驱动的分析引擎（V1）");
+    console.log("[agent] 提示: 设置 USE_STRATEGY_ENGINE=true 启用策略引擎");
+  }
+
   return createDeepAgent({
     model: ollamaModel,
-    tools: [...qiemanTools, analyzePortfolioTool],
+    tools: [...qiemanTools, ...analysisTools],
     subagents: [
       { ...dataFetcherSpec, tools: qiemanTools },
       reporterSpec,
