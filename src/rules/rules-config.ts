@@ -110,16 +110,45 @@ export const RULES: Record<AssetCategory, RuleConfig> = {
   },
 };
 
-/** 目标仓位配置 */
+/** 目标仓位配置（各类别独立配置，海外三类合计 15%） */
 export const TARGET_ALLOCATION: Record<string, number> = {
   broad_base: 0.35,
   tech: 0.15,
-  overseas: 0.15,   // sp500 + nasdaq + china_internet 合计
+  overseas_sp500: 0.05,
+  overseas_nasdaq: 0.05,
+  overseas_china_internet: 0.05,
   bond: 0.30,
   gold: 0.05,
 };
 
-/** 总目标金额 */
+/** 获取资产类别的目标占比（支持合并查询海外类） */
+export function getTargetAllocation(category: AssetCategory): number {
+  return TARGET_ALLOCATION[category] || 0;
+}
+
+/** 获取海外类总目标占比 */
+export function getOverseasTotalAllocation(): number {
+  return TARGET_ALLOCATION.overseas_sp500 +
+         TARGET_ALLOCATION.overseas_nasdaq +
+         TARGET_ALLOCATION.overseas_china_internet;
+}
+
+/**
+ * 总目标金额（定投目标）
+ *
+ * 补仓金额计算策略：
+ * - 当前策略：基于 TARGET_TOTAL（目标总额 200,000 元）
+ * - 适用场景：定投初期、持仓未满目标时（当前到位率 22.1%）
+ * - 计算公式：补仓金额 = TARGET_TOTAL × 该资产目标占比 × 补仓档位百分比
+ *
+ * 示例：
+ * - 宽基类第1档补仓（5%）：200,000 × 35% × 5% = 3,500 元
+ * - 宽基类第2档补仓（10%）：200,000 × 35% × 10% = 7,000 元
+ *
+ * 未来优化：
+ * - 当到位率接近100%时，可切换为基于当前持仓的策略
+ * - 添加 USE_CURRENT_HOLDING 配置项来控制计算基准
+ */
 export const TARGET_TOTAL = 200_000;
 
 /** 债券弹药库规则 */

@@ -19,10 +19,10 @@ export function matchRules(funds: FundInfo[], marketData: MarketData[]): RuleRes
     const market = marketData.find((m) => m.code === fund.code);
     if (!market) continue;
 
-    // 检查补仓档位
-    for (let i = 0; i < rule.buyTiers.length; i++) {
+    // 检查补仓档位（从高档到低档，只触发最高档）
+    const drop = Math.abs(market.dropFromHigh);
+    for (let i = rule.buyTiers.length - 1; i >= 0; i--) {
       const tier = rule.buyTiers[i];
-      const drop = Math.abs(market.dropFromHigh);
       if (drop >= tier.dropPercent) {
         results.push({
           code: fund.code,
@@ -32,12 +32,13 @@ export function matchRules(funds: FundInfo[], marketData: MarketData[]): RuleRes
           triggerReason: `较近期高点下跌 ${drop.toFixed(1)}%，触发第 ${i + 1} 档补仓（阈值 -${tier.dropPercent}%）`,
           amount: 0,
         });
+        break; // 只触发最高档，不继续检查低档
       }
     }
 
-    // 检查止盈档位
+    // 检查止盈档位（从高档到低档，只触发最高档）
     if (market.buyPoints.length > 0) {
-      for (let i = 0; i < rule.sellTiers.length; i++) {
+      for (let i = rule.sellTiers.length - 1; i >= 0; i--) {
         const tier = rule.sellTiers[i];
         if (market.riseFromBuyPoint >= tier.risePercent) {
           results.push({
@@ -48,6 +49,7 @@ export function matchRules(funds: FundInfo[], marketData: MarketData[]): RuleRes
             triggerReason: `较补仓点上涨 ${market.riseFromBuyPoint.toFixed(1)}%，触发第 ${i + 1} 档止盈（阈值 +${tier.risePercent}%）`,
             amount: 0,
           });
+          break; // 只触发最高档，不继续检查低档
         }
       }
     }

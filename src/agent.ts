@@ -7,9 +7,19 @@ import { dataFetcherSpec } from "./agents/data-fetcher";
 import { reporterSpec } from "./agents/reporter";
 import { analyzePortfolioTool } from "./agents/analysis-engine";
 import { loadFundList } from "./utils/fund-loader";
+import { validateConfig, printValidationResult } from "./utils/config-validator";
 
 /** 创建 DeepAgent 主编排器 */
 async function createFundAgent() {
+  // 配置一致性检查
+  console.log("[agent] 正在检查配置一致性...");
+  const validationResult = validateConfig();
+  printValidationResult(validationResult);
+
+  if (!validationResult.valid) {
+    throw new Error("配置检查失败，请修复后重新启动");
+  }
+
   // 动态加载基金列表
   const fundRegistry = await loadFundList();
   const fundCodes = fundRegistry.map((f) => f.code).join("、");

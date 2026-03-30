@@ -20,6 +20,9 @@ export function optimizePortfolio(funds: FundInfo[], ruleResults: RuleResult[]):
     if (result.action === "buy") {
       const tier = rule.buyTiers[result.tier - 1];
       if (tier) {
+        // 补仓金额 = 目标总额 × 档位百分比
+        // 适用于定投初期（当前到位率 22.1%），基于最终目标计算
+        // 示例：宽基类第1档 = 200,000 × 5% = 10,000 元
         const amount = TARGET_TOTAL * (tier.buyPercent / 100);
         suggestions.push({
           code: result.code,

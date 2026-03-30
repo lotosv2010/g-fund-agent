@@ -46,7 +46,20 @@ async function loadFromPortfolio(filePath: string): Promise<FundMeta[]> {
     // 匹配 ## 标题，推断资产类别
     const headerMatch = line.match(/^##\s+(.+)/);
     if (headerMatch) {
-      currentCategory = inferCategory(headerMatch[1]);
+      const headerText = headerMatch[1];
+
+      // 跳过已知的非资产类别标题（汇总、总计等）
+      const isNonCategoryHeader = /^(汇总|总计|合计|小计|说明|备注)$/i.test(headerText);
+      if (isNonCategoryHeader) {
+        currentCategory = null;
+        continue;
+      }
+
+      const newCategory = inferCategory(headerText);
+      if (newCategory === null) {
+        console.warn(`[fund-loader] ⚠️  无法识别的资产类别: "${headerText}"，该分类下的基金将被跳过`);
+      }
+      currentCategory = newCategory;
       continue;
     }
 
@@ -104,7 +117,20 @@ async function loadFromFile(filePath: string): Promise<FundMeta[]> {
     // 匹配标题
     const headerMatch = line.match(/^#\s+(.+)/);
     if (headerMatch) {
-      currentCategory = inferCategory(headerMatch[1]);
+      const headerText = headerMatch[1];
+
+      // 跳过已知的非资产类别标题（汇总、总计等）
+      const isNonCategoryHeader = /^(汇总|总计|合计|小计|说明|备注)$/i.test(headerText);
+      if (isNonCategoryHeader) {
+        currentCategory = null;
+        continue;
+      }
+
+      const newCategory = inferCategory(headerText);
+      if (newCategory === null) {
+        console.warn(`[fund-loader] ⚠️  无法识别的资产类别: "${headerText}"，该分类下的基金将被跳过`);
+      }
+      currentCategory = newCategory;
       continue;
     }
 
@@ -131,6 +157,21 @@ async function loadFromFile(filePath: string): Promise<FundMeta[]> {
 
 /**
  * 根据标题文本推断资产类别
+ *
+ * @param header 标题文本（如"宽基类"、"科技主题类"等）
+ * @returns 资产类别或 null（无法识别时）
+ *
+ * 支持的标题模式：
+ * - 宽基 / broad
+ * - 科技 / tech
+ * - 标普 / sp500
+ * - 纳斯达克 / nasdaq
+ * - 中概 + internet / china + internet
+ * - 债 / bond
+ * - 黄金 / gold
+ * - 海外 / overseas / qdii（默认归为 overseas_sp500）
+ *
+ * 注意：返回 null 时，该分类下的基金会被跳过并输出警告
  */
 function inferCategory(header: string): AssetCategory | null {
   const h = header.toLowerCase();
