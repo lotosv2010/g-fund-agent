@@ -18,16 +18,7 @@
 | 改基金列表 | `docs/portfolio.md`（推荐）或 `src/rules/fund-registry.ts`（兜底） |
 | 改补仓/止盈阈值 | `src/rules/rules-config.ts` |
 | 改 Agent 编排 | `src/agent.ts` |
+| 改分析引擎 | `src/agents/analysis-engine.ts`（三个纯计算函数的入口） |
 | 改子 Agent | `src/agents/data-fetcher.ts` 或 `reporter.ts` |
 | 改 MCP 配置 | `src/mcp/client.ts` |
 | 改 LLM 模型 | `src/models.ts` |
-| 自定义基金列表 | `docs/fund-list-template.md` + 环境变量 |
-
-## 当前阶段注意
-
-以下文件已实现但**尚未接入**主编排器，联调时才会接入：
-- `src/agents/market-calculator.ts`
-- `src/agents/rule-matcher.ts`
-- `src/agents/portfolio-optimizer.ts`
-
-修改这些文件时不需要同步改 `agent.ts`。

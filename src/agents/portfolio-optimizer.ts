@@ -1,5 +1,5 @@
 import type { FundInfo, RuleResult, Suggestion } from "../state/types";
-import { RULES, TARGET_TOTAL, BOND_AMMO_SELL_RANGE, BOND_OVERWEIGHT_THRESHOLD } from "../rules/rules-config";
+import { RULES, TARGET_TOTAL, getTargetAllocation, BOND_AMMO_SELL_RANGE, BOND_OVERWEIGHT_THRESHOLD } from "../rules/rules-config";
 import { FUND_REGISTRY } from "../rules/fund-registry";
 
 /**
@@ -20,10 +20,11 @@ export function optimizePortfolio(funds: FundInfo[], ruleResults: RuleResult[]):
     if (result.action === "buy") {
       const tier = rule.buyTiers[result.tier - 1];
       if (tier) {
-        // 补仓金额 = 目标总额 × 档位百分比
-        // 适用于定投初期（当前到位率 22.1%），基于最终目标计算
-        // 示例：宽基类第1档 = 200,000 × 5% = 10,000 元
-        const amount = TARGET_TOTAL * (tier.buyPercent / 100);
+        // 补仓金额 = 该类别目标金额 × 档位百分比
+        // 该类别目标金额 = 总目标 × 类别占比
+        // 示例：宽基类第1档 = 200,000 × 35% × 5% = 3,500 元
+        const categoryTarget = TARGET_TOTAL * getTargetAllocation(meta.category);
+        const amount = categoryTarget * (tier.buyPercent / 100);
         suggestions.push({
           code: result.code,
           name: result.name,

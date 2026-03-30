@@ -12,19 +12,15 @@
 
 ## 2. 项目范围
 
-### 当前阶段（骨架搭建）
+### 已完成
 
-- DeepAgent 主编排器 + 2 个子 Agent 规格已就绪
+- DeepAgent 主编排器 + 2 个子 Agent + 分析引擎工具已接入
 - 规则引擎（rules-config）和基金注册表（fund-registry）已完成
 - 状态存储（store）已完成
-- 3 个纯计算函数已实现但**尚未接入主编排器**（联调阶段接入）
+- 3 个纯计算函数（market-calculator / rule-matcher / portfolio-optimizer）已通过 `analysis-engine.ts` 接入主编排器
+- MCP 数据层已连通（qieman MCP，73 个工具）
 
-### 待开发
-
-- MCP 数据获取联调（data_fetcher 子 Agent 对接 qieman）
-- 纯计算函数接入主编排器
-- 报告生成联调（reporter 子 Agent）
-- 端到端测试
+### 当前阶段：联调与规则完善
 
 开发规划和进度见 `docs/PLAN.md`。
 
@@ -62,9 +58,10 @@ g-fund-agent/
 │   ├── agents/
 │   │   ├── data-fetcher.ts        # 子 Agent 规格：数据获取
 │   │   ├── reporter.ts            # 子 Agent 规格：报告生成 + save_report 工具
-│   │   ├── market-calculator.ts   # [待接入] 纯函数：市场计算
-│   │   ├── rule-matcher.ts        # [待接入] 纯函数：规则匹配
-│   │   └── portfolio-optimizer.ts # [待接入] 纯函数：组合优化
+│   │   ├── analysis-engine.ts     # 分析引擎 Tool（封装下面三个纯函数）
+│   │   ├── market-calculator.ts   # 纯函数：市场计算
+│   │   ├── rule-matcher.ts        # 纯函数：规则匹配
+│   │   └── portfolio-optimizer.ts # 纯函数：组合优化
 │   ├── rules/
 │   │   ├── rules-config.ts        # 5 类基金补仓/止盈规则配置
 │   │   └── fund-registry.ts       # 12 只基金注册表（代码/名称/分类）
@@ -137,18 +134,16 @@ export const myAgentSpec: SubAgent = {
 
 ### 接入方式
 
-通过 `@langchain/mcp-adapters` 的 `MultiServerMCPClient` 接入，SSE 传输协议。
+通过 `@langchain/mcp-adapters` 的 `MultiServerMCPClient` 接入，Streamable HTTP 传输协议（自动回退 SSE）。
 
 ### 服务配置（`src/mcp/client.ts`）
 
 ```typescript
 export const mcpServers = {
   qieman: {
-    transport: "http" as const,
     url: process.env.QIEMAN_MCP_URL,
     headers: {
       "x-api-key": process.env.QIEMAN_API_KEY,
-      Accept: "application/json, text/event-stream",
     },
   },
 };
@@ -211,13 +206,13 @@ const tools = await getMcpTools("qieman");
 
 | 文件 | 用途 | 更新频率 |
 |------|------|----------|
-| `docs/HOME.md` | 操作首页（持仓总览、规则速查） | 每周随持仓更新 |
+| `docs/HOME.md` | 操作首页（规则速查、文档导航） | 规则变更时 |
 | `docs/spec/SPEC.md` | 需求规格（规则权威定义） | 需求变更时 |
-| `docs/PLAN.md` | 开发规划和进度 | 开发阶段变更时 |
-| `docs/portfolio.md` | 当前持仓数据（唯一数据源） | 每周更新 |
+| `docs/PLAN.md` | 开发规划和待办 | 开发阶段变更时 |
+| `docs/portfolio.md` | 当前持仓数据（唯一数据源） | 每次分析后更新 |
 | `docs/reports/TEMPLATE.md` | 周报输出模板 | 模板变更时 |
-| `docs/reports/weekly/` | 每周持仓快照 | Agent 自动生成 |
-| `docs/reports/analysis/` | 每周分析报告 | Agent 自动生成 |
+| `docs/reports/weekly/` | 持仓快照 | Agent 自动生成 |
+| `docs/reports/analysis/` | 分析报告 | Agent 自动生成 |
 | `docs/reports/suggestions/` | 调仓建议 | 触发规则时生成 |
 | `docs/records/` | 实际操作记录 | 手动记录 |
 
