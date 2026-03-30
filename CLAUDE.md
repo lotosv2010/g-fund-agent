@@ -12,6 +12,7 @@
 
 | 要做什么 | 看哪个文件 |
 |----------|-----------|
+| 理解架构设计 | `docs/ARCHITECTURE.md` |
 | 理解业务规则 | `docs/spec/SPEC.md` |
 | 查看开发进度 | `docs/PLAN.md` |
 | 查看当前持仓 | `docs/portfolio.md` |
@@ -23,6 +24,10 @@
 | 改规则匹配逻辑 | `src/agents/rule-matcher.ts`（补仓/止盈档位判断） |
 | 改组合优化逻辑 | `src/agents/portfolio-optimizer.ts`（建议生成、债券联动） |
 | 改状态存储 | `src/state/store.ts`（补仓点、高点、触发档位） |
+| 改数据聚合 | `src/data/context.ts`（市场上下文） |
+| 改数据源适配 | `src/data/providers/`（宏观、情绪指标） |
+| 改风控逻辑 | `src/risk/`（回撤、集中度、流动性） |
+| 改定时配置 | `src/scheduler/config.ts`（cron表达式） |
 | 改子 Agent | `src/agents/data-fetcher.ts` 或 `reporter.ts` |
 | 改 MCP 配置 | `src/mcp/client.ts` |
 | 改 LLM 模型 | `src/models.ts` |

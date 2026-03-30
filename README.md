@@ -6,6 +6,7 @@
 
 ## 核心功能
 
+### Phase 0：规则引擎基础
 - **纯规则驱动**: 所有买卖决策由配置规则触发，LLM 仅用于数据获取和报告生成
 - **多源数据**: 通过 MCP 接口实时获取基金净值数据（qieman / 且慢）
 - **分类策略**: 按 5 类资产（宽基、科技、海外、债券、黄金）分别执行补仓/止盈规则
@@ -13,6 +14,12 @@
 - **精准止盈**: 按所有补仓点的加权平均成本计算止盈基准，多次补仓时更准确
 - **档位去重**: 同一档位不会重复触发，只有更高档位或状态重置后才会再次触发
 - **债券弹药库**: 深度下跌时自动触发债券减仓为补仓提供资金
+
+### Phase 1：数据聚合 + 风控层
+- **多维数据**: 聚合宏观指标、市场情绪等多源数据（当前MVP阶段）
+- **三层风控**: 回撤控制 + 集中度检查 + 流动性预警
+- **风险阻断**: 自动阻止超过止损线或高风险的建议
+- **定时触发**: 支持 cron 定时运行（双周周四/每月13号/自定义）
 - **全程追踪**: 所有决策可通过 LangSmith 追踪审计
 
 ## 目标仓位
@@ -63,13 +70,26 @@ src/
 ├── agent.ts              # DeepAgent 主编排器（入口）
 ├── models.ts             # LLM 模型配置
 ├── agents/               # 子 Agent 和纯计算函数
-│   ├── analysis-engine.ts     # 分析引擎（规则管道入口）
+│   ├── analysis-engine.ts     # 分析引擎（集成风控层）
 │   ├── market-calculator.ts   # 市场计算（高点、涨跌幅）
 │   ├── rule-matcher.ts        # 规则匹配（档位触发判断）
 │   └── portfolio-optimizer.ts # 组合优化（建议生成）
 ├── rules/                # 规则配置 + 基金注册表
 ├── state/                # 类型定义 + 状态存储
 │   └── store.ts              # 补仓点、高点、触发档位持久化
+├── data/                 # 数据聚合层（Phase 1）
+│   ├── context.ts            # 市场上下文聚合
+│   └── providers/            # 数据源适配器
+│       ├── qieman.ts         # 且慢 MCP
+│       ├── macro.ts          # 宏观指标（MVP）
+│       └── sentiment.ts      # 市场情绪（MVP）
+├── risk/                 # 风控层（Phase 1）
+│   ├── index.ts              # 风控聚合器
+│   ├── drawdown.ts           # 回撤控制
+│   ├── concentration.ts      # 集中度检查
+│   └── liquidity.ts          # 流动性检查
+├── scheduler/            # 定时任务（Phase 1）
+│   └── config.ts             # Cron 配置
 ├── mcp/                  # qieman MCP 客户端
 └── utils/                # 工具函数
 
@@ -84,11 +104,13 @@ data/                     # 运行时状态（已加入 .gitignore）
 | 文档 | 说明 |
 |------|------|
 | [AGENTS.md](./AGENTS.md) | 项目开发规范（AI 开发工具共用） |
+| [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | **架构设计文档（技术架构 + 业务流程）** |
+| [docs/PLAN.md](./docs/PLAN.md) | 开发规划和进度（Phase 0-4） |
 | [docs/USAGE.md](./docs/USAGE.md) | 使用说明和操作步骤 |
-| [docs/TESTING.md](./docs/TESTING.md) | 联调测试指南 |
+| [docs/TESTING.md](./docs/TESTING.md) | 联调测试指南（Phase 0） |
+| [docs/SCHEDULING.md](./docs/SCHEDULING.md) | 定时运行配置指南（Phase 1） |
 | [docs/spec/SPEC.md](./docs/spec/SPEC.md) | 完整需求规格 |
 | [docs/HOME.md](./docs/HOME.md) | 操作首页（持仓总览、规则速查） |
-| [docs/PLAN.md](./docs/PLAN.md) | 开发规划和进度 |
 | [docs/portfolio.md](./docs/portfolio.md) | 当前持仓数据（自动更新） |
 
 ## 常用命令

@@ -67,3 +67,52 @@ export interface TriggeredTiers {
   buy?: number;       // 最后触发的补仓档位（1/2/3）
   sell?: number;      // 最后触发的止盈档位（1/2/3）
 }
+
+/** 宏观经济指标 */
+export interface MacroIndicators {
+  bondYield10Y?: number;        // 十年期国债收益率
+  pmi?: number;                 // 制造业PMI
+  socialFinancing?: number;     // 社融增速
+  timestamp: string;            // 数据时间戳
+}
+
+/** 市场情绪指标 */
+export interface SentimentIndicators {
+  marginBalance?: number;       // 融资融券余额（亿元）
+  northboundFlow?: number;      // 北向资金净流入（亿元）
+  fundRedemption?: number;      // 基金申赎比
+  timestamp: string;
+}
+
+/** 行业指数数据 */
+export interface IndustryIndex {
+  name: string;                 // 行业名称
+  code: string;                 // 指数代码
+  value: number;                // 当前点位
+  change: number;               // 涨跌幅（%）
+}
+
+/** 扩展市场上下文（包含多源数据） */
+export interface ExtendedMarketContext {
+  funds: FundInfo[];            // 基金净值数据
+  marketData: MarketData[];     // 市场计算结果
+  macro?: MacroIndicators;      // 宏观指标（可选）
+  sentiment?: SentimentIndicators; // 市场情绪（可选）
+  industries?: IndustryIndex[]; // 行业指数（可选）
+}
+
+/** 风控检查结果 */
+export interface RiskCheckResult {
+  passed: boolean;              // 是否通过检查
+  level: "info" | "warning" | "error"; // 风险等级
+  message: string;              // 提示信息
+  blockedSuggestions?: string[]; // 被阻止的建议（code列表）
+}
+
+/** 回撤数据 */
+export interface DrawdownData {
+  code: string;
+  currentDrawdown: number;      // 当前回撤（%）
+  maxDrawdown: number;          // 历史最大回撤（%）
+  daysInDrawdown: number;       // 回撤持续天数
+}

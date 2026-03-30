@@ -42,10 +42,12 @@
 
 | 文档 | 说明 |
 |------|------|
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | **架构设计（技术架构 + 业务流程图）** |
+| [PLAN.md](./PLAN.md) | 开发规划和待办（Phase 0-4） |
 | [USAGE.md](./USAGE.md) | 安装、启动、操作步骤 |
-| [TESTING.md](./TESTING.md) | 联调测试指南、问题排查 |
+| [TESTING.md](./TESTING.md) | 联调测试指南（Phase 0） |
+| [SCHEDULING.md](./SCHEDULING.md) | 定时运行配置（Phase 1） |
 | [spec/SPEC.md](./spec/SPEC.md) | 完整需求规格、规则定义 |
-| [PLAN.md](./PLAN.md) | 开发规划和待办 |
 | [portfolio.md](./portfolio.md) | 当前持仓明细（自动更新） |
 | [reports/](./reports/) | 持仓快照、分析报告、调仓建议 |
 | [records/](./records/) | 历次调仓操作归档 |

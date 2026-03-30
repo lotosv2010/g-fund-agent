@@ -8,7 +8,7 @@
 
 **核心原则：纯规则驱动，禁止 LLM 主观判断。**
 
-完整业务需求见 `docs/spec/SPEC.md`。
+完整业务需求见 `docs/spec/SPEC.md`，架构设计见 `docs/ARCHITECTURE.md`。
 
 ## 2. 项目范围
 
@@ -20,9 +20,10 @@
 - 3 个纯计算函数（market-calculator / rule-matcher / portfolio-optimizer）已通过 `analysis-engine.ts` 接入主编排器
 - MCP 数据层已连通（qieman MCP，73 个工具）
 
-### 当前阶段：Phase 1 - 数据丰富 + 风控层
+### 当前阶段：Phase 2 - 策略抽象层
 
 - Phase 0 已完成：规则引擎稳定运行，核心功能齐全
+- Phase 1 已完成：数据聚合 + 三层风控体系 + 定时触发
 - 开发规划和进度见 `docs/PLAN.md`
 
 ## 3. 技术栈与运行方式
@@ -67,16 +68,32 @@ g-fund-agent/
 │   │   ├── rules-config.ts        # 5 类基金补仓/止盈规则配置
 │   │   └── fund-registry.ts       # 12 只基金注册表（代码/名称/分类）
 │   ├── state/
-│   │   ├── types.ts               # 业务类型定义
+│   │   ├── types.ts               # 业务类型定义（含风控、市场上下文）
 │   │   └── store.ts               # JSON 状态读写（补仓点、近期高点、已触发档位）
+│   ├── data/                      # 数据聚合层（Phase 1）
+│   │   ├── context.ts             # 市场上下文聚合
+│   │   └── providers/             # 数据源适配器
+│   │       ├── qieman.ts          # 且慢 MCP（文档）
+│   │       ├── macro.ts           # 宏观指标（MVP）
+│   │       └── sentiment.ts       # 市场情绪（MVP）
+│   ├── risk/                      # 风控层（Phase 1）
+│   │   ├── index.ts               # 风控聚合器
+│   │   ├── drawdown.ts            # 回撤控制
+│   │   ├── concentration.ts       # 集中度检查
+│   │   └── liquidity.ts           # 流动性检查
+│   ├── scheduler/                 # 定时任务（Phase 1）
+│   │   └── config.ts              # Cron 配置
 │   ├── mcp/
 │   │   └── client.ts              # qieman MCP 客户端 + mcpServers 配置
 │   └── utils/
 │       └── calc.ts                # 涨跌幅计算、格式化、周标识工具
-├── data/
-│   ├── buy-points.json            # 补仓点记录（运行时写入）
-│   ├── high-points.json           # 近期高点记录（运行时写入）
-│   └── triggered-tiers.json       # 已触发档位记录（运行时写入）
+├── data/                          # 运行时状态（已加入 .gitignore）
+│   ├── buy-points.json            # 补仓点记录
+│   ├── high-points.json           # 近期高点记录
+│   └── triggered-tiers.json       # 已触发档位记录
+├── docs/
+│   ├── TESTING.md                 # 联调测试指南（Phase 0）
+│   └── SCHEDULING.md              # 定时运行指南（Phase 1）
 ├── docs/                          # 项目文档（见第 9 节）
 ├── langgraph.json                 # langgraphjs CLI 配置
 ├── .env                           # 环境变量（不提交）
@@ -170,8 +187,10 @@ const tools = await getMcpTools("qieman");
 2. **补仓点必须持久化** — 每次补仓操作记录到 `data/buy-points.json`，止盈规则依赖加权平均补仓成本
 3. **档位去重** — 已触发档位记录到 `data/triggered-tiers.json`，避免重复触发同一档位
 4. **滚动窗口高点** — 近期高点采用60日滚动窗口，超过60天未创新高则自动重置
-5. **净值检查必输出** — 每次运行必须输出净值检查表，无论是否触发操作
-6. **债券弹药库联动** — 其他资产触发第 3 档补仓时，自动触发债券减仓
+5. **风控优先** — Phase 1 新增三层风控（回撤/集中度/流动性），自动阻止高风险建议
+6. **数据容错** — 多源数据聚合，单个数据源失败不影响整体运行
+7. **净值检查必输出** — 每次运行必须输出净值检查表，无论是否触发操作
+8. **债券弹药库联动** — 其他资产触发第 3 档补仓时，自动触发债券减仓
 
 ### 7.2 架构约束
 
