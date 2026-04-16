@@ -1,6 +1,6 @@
 import type { DeepAgent, DeepAgentTypeConfig } from "deepagents";
 import type { StructuredToolInterface } from "@langchain/core/tools";
-import { validateEnv } from "./domain";
+import { validateEnv, type AppEnv } from "./domain";
 import { loadPortfolio, formatPortfolioContext } from "./utils/portfolio-loader";
 import { loadStrategy, formatStrategyContext } from "./utils/strategy-loader";
 import { getModel, type ModelId } from "./modules/llm";
@@ -17,6 +17,21 @@ export interface BootstrapResult {
 }
 
 /**
+ * 安全加载可选资源，失败时打印警告并返回 undefined。
+ *
+ * 持仓和策略均为可选数据，加载失败不应阻塞启动。
+ */
+function safeLoad<T>(loader: () => T, label: string): T | undefined {
+  try {
+    return loader();
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.warn(chalk.yellow(`${label}加载跳过: ${msg}`));
+    return undefined;
+  }
+}
+
+/**
  * 应用启动流程：校验环境 → 加载持仓/策略 → 初始化 LLM → 连接 MCP → 创建 Agent。
  *
  * 持仓数据和操作策略均注入 System Prompt，CLI 和 LangGraph 两种模式共享。
@@ -25,30 +40,19 @@ export interface BootstrapResult {
  * @returns 初始化完成的 Agent 和 MCP 服务句柄
  */
 export async function bootstrap(modelId: ModelId): Promise<BootstrapResult> {
-  validateEnv();
+  const env: AppEnv = validateEnv();
 
-  // 加载持仓数据（失败不阻塞启动，仅打印警告）
-  let portfolioContext: string | undefined;
-  try {
-    const portfolio = loadPortfolio();
-    portfolioContext = formatPortfolioContext(portfolio);
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    console.warn(chalk.yellow(`持仓数据加载跳过: ${msg}`));
-  }
+  const portfolioContext = safeLoad(
+    () => formatPortfolioContext(loadPortfolio()),
+    "持仓数据",
+  );
+  const strategyContext = safeLoad(
+    () => formatStrategyContext(loadStrategy()),
+    "策略数据",
+  );
 
-  // 加载操作策略（失败不阻塞启动，仅打印警告）
-  let strategyContext: string | undefined;
-  try {
-    const strategy = loadStrategy();
-    strategyContext = formatStrategyContext(strategy);
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    console.warn(chalk.yellow(`策略数据加载跳过: ${msg}`));
-  }
-
-  const model = getModel(modelId);
-  const mcp = new McpService();
+  const model = getModel(modelId, env);
+  const mcp = new McpService(env);
   const mcpTools = await mcp.getTools();
 
   // 合并 MCP 工具 + 自定义业务工具
@@ -56,9 +60,6 @@ export async function bootstrap(modelId: ModelId): Promise<BootstrapResult> {
     ...mcpTools,
     updatePortfolioTool as unknown as StructuredToolInterface,
   ];
-
-  console.log(chalk.cyanBright(`持仓上下文:\n${portfolioContext}`));
-  console.log(chalk.cyanBright(`策略上下文:\n${strategyContext}`));
 
   const agent = createFundAgent({ model, tools, portfolioContext, strategyContext });
 

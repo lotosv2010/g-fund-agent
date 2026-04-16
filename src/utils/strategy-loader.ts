@@ -1,51 +1,16 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { ConfigError } from "../domain";
+import { ConfigError, StrategySchema, type Strategy } from "../domain";
 
 /** 策略文件路径 */
 const STRATEGY_PATH = resolve("data/strategy.json");
 
-/** 买入触发条件 */
-interface BuyTrigger {
-  readonly drawdown: number;
-  readonly action: string;
-}
-
-/** 卖出触发条件 */
-interface SellTrigger {
-  readonly gain: number;
-  readonly action: string;
-}
-
-/** 资产类别策略 */
-interface CategoryStrategy {
-  readonly name: string;
-  readonly funds: readonly string[];
-  readonly buyTriggers: readonly BuyTrigger[];
-  readonly sellTriggers: readonly SellTrigger[];
-}
-
-/** 弹药库（债券）策略 */
-interface AmmoFund {
-  readonly name: string;
-  readonly role: string;
-  readonly triggerRule: string;
-  readonly capRule: string;
-}
-
-/** 策略数据结构 */
-interface Strategy {
-  readonly name: string;
-  readonly principle: string;
-  readonly ammoFund: AmmoFund;
-  readonly categories: readonly CategoryStrategy[];
-  readonly disciplineRules: readonly string[];
-}
-
 /**
- * 加载用户操作策略数据。
+ * 加载并校验用户操作策略数据。
  *
- * @throws {ConfigError} 文件不存在或 JSON 格式错误时抛出
+ * 使用 Zod Schema 做运行时校验，确保数据结构符合预期。
+ *
+ * @throws {ConfigError} 文件不存在、JSON 格式错误或数据校验失败时抛出
  */
 export function loadStrategy(): Strategy {
   if (!existsSync(STRATEGY_PATH)) {
@@ -54,11 +19,22 @@ export function loadStrategy(): Strategy {
 
   const raw = readFileSync(STRATEGY_PATH, "utf-8");
 
+  let json: unknown;
   try {
-    return JSON.parse(raw) as Strategy;
+    json = JSON.parse(raw);
   } catch {
     throw new ConfigError(`策略文件 JSON 格式错误: ${STRATEGY_PATH}`);
   }
+
+  const result = StrategySchema.safeParse(json);
+  if (!result.success) {
+    const issues = result.error.issues
+      .map((i) => `  - ${i.path.join(".")}: ${i.message}`)
+      .join("\n");
+    throw new ConfigError(`策略数据校验失败:\n${issues}`);
+  }
+
+  return result.data;
 }
 
 /**

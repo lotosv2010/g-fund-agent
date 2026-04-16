@@ -1,7 +1,7 @@
 import { MultiServerMCPClient } from "@langchain/mcp-adapters";
 import type { StructuredToolInterface } from "@langchain/core/tools";
-import { McpConnectionError } from "../../domain";
-import { MCP_SERVERS } from "./mcp.config";
+import { McpConnectionError, type AppEnv } from "../../domain";
+import { createMcpServers } from "./mcp.config";
 
 /**
  * MCP 客户端服务 —— 封装 MCP 连接生命周期。
@@ -13,6 +13,11 @@ import { MCP_SERVERS } from "./mcp.config";
  */
 export class McpService {
   private client: MultiServerMCPClient | null = null;
+  private readonly env: AppEnv;
+
+  constructor(env: AppEnv) {
+    this.env = env;
+  }
 
   /**
    * 初始化 MCP 客户端并返回所有可用工具。
@@ -28,7 +33,7 @@ export class McpService {
     try {
       this.client = new MultiServerMCPClient({
         onConnectionError: "throw",
-        mcpServers: MCP_SERVERS,
+        mcpServers: createMcpServers(this.env),
       });
       return await this.client.getTools();
     } catch (error) {

@@ -1,8 +1,9 @@
 import "dotenv/config";
 import type { DeepAgent, DeepAgentTypeConfig } from "deepagents";
 import { validateEnv, ConfigError } from "./domain";
-import { isValidModelId, type ModelId } from "./modules/llm";
+import { isValidModelId } from "./modules/llm";
 import { bootstrap, registerShutdownHooks } from "./bootstrap";
+import { chalk } from "./utils/colors";
 
 /**
  * LangGraph 入口。
@@ -20,9 +21,9 @@ async function initAgent(): Promise<DeepAgent<DeepAgentTypeConfig>> {
     );
   }
 
-  console.log(`Using LLM provider: ${provider}`);
+  console.log(chalk.green(`Using LLM provider: ${provider}`));
 
-  const { agent, mcp } = await bootstrap(provider as ModelId);
+  const { agent, mcp } = await bootstrap(provider);
   registerShutdownHooks(mcp);
 
   return agent;

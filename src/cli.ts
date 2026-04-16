@@ -1,6 +1,8 @@
 import "dotenv/config";
 import { select, input, confirm } from "@inquirer/prompts";
+import type { DeepAgent, DeepAgentTypeConfig } from "deepagents";
 import { HumanMessage, AIMessage, type BaseMessage } from "@langchain/core/messages";
+import { validateEnv, type AppEnv } from "./domain";
 import { getModelChoices, type ModelId } from "./modules/llm";
 import {
   buildViewInstruction,
@@ -20,7 +22,7 @@ import {
 import { chalk } from "./utils/colors";
 
 /** Agent 类型简写 */
-type Agent = Awaited<ReturnType<typeof import("./modules/agent").createFundAgent>>;
+type Agent = DeepAgent<DeepAgentTypeConfig>;
 
 /** 功能菜单选项 */
 type Feature = "update" | "analyze" | "view" | "chat";
@@ -28,8 +30,8 @@ type Feature = "update" | "analyze" | "view" | "chat";
 // ─── UI 基础组件 ───
 
 /** 交互式选择 LLM 模型 */
-async function selectModel(): Promise<ModelId> {
-  const choices = getModelChoices().map((c) => ({
+async function selectModel(env: AppEnv): Promise<ModelId> {
+  const choices = getModelChoices(env).map((c) => ({
     name: c.label,
     value: c.id,
   }));
@@ -315,8 +317,11 @@ async function updatePortfolioFlow(agent: Agent): Promise<void> {
 // ─── CLI 主流程 ───
 
 async function main(): Promise<void> {
+  // 0. 校验环境变量（fail-fast）
+  const env = validateEnv();
+
   // 1. 选择模型
-  const modelId = await selectModel();
+  const modelId = await selectModel(env);
   console.log(`\n${chalk.green("使用模型:")} ${chalk.bold(modelId)}`);
 
   // 2. 初始化 Agent

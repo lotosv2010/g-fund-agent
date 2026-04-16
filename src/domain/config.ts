@@ -22,24 +22,24 @@ const EnvSchema = z.object({
   LLM_PROVIDER: z.string().optional().default(""),
 
   // DeepSeek
-  DEEPSEEK_BASE_URL: z.string().optional(),
+  DEEPSEEK_BASE_URL: z.string().optional().default("https://api.deepseek.com"),
   DEEPSEEK_API_KEY: z.string().optional(),
-  DEEPSEEK_MODEL: z.string().optional(),
-  DEEPSEEK_REASONER_MODEL: z.string().optional(),
+  DEEPSEEK_MODEL: z.string().optional().default("deepseek-chat"),
+  DEEPSEEK_REASONER_MODEL: z.string().optional().default("deepseek-reasoner"),
 
   // Gemini
   GEMINI_API_KEY: z.string().optional(),
-  GEMINI_MODEL: z.string().optional(),
+  GEMINI_MODEL: z.string().optional().default("gemini-3-flash-preview"),
 
   // Moonshot
-  MOONSHOT_BASE_URL: z.string().optional(),
+  MOONSHOT_BASE_URL: z.string().optional().default("https://api.moonshot.cn/v1"),
   MOONSHOT_API_KEY: z.string().optional(),
-  MOONSHOT_MODEL: z.string().optional(),
+  MOONSHOT_MODEL: z.string().optional().default("kimi-k2.5"),
 
   // MiniMax
-  MINIMAX_BASE_URL: z.string().optional(),
+  MINIMAX_BASE_URL: z.string().optional().default("https://api.minimax.chat/v1"),
   MINIMAX_API_KEY: z.string().optional(),
-  MINIMAX_MODEL: z.string().optional(),
+  MINIMAX_MODEL: z.string().optional().default("MiniMax-M2.7"),
 
   // Ollama
   OLLAMA_BASE_URL: z.string().optional().default("http://localhost:11434"),

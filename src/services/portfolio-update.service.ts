@@ -4,7 +4,13 @@
  * 提供 Agent 回复解析、涨跌数据标准化、更新计算、持久化等能力，
  * CLI 和 LangGraph 两种模式共享。
  */
+import { z } from "zod";
 import type { Portfolio, HoldingItem } from "../domain";
+import {
+  FundDailyReturnSchema,
+  type FundDailyReturn,
+  type TradeOperation,
+} from "../domain";
 import { loadPortfolio, findLatestPortfolioFile } from "../utils/portfolio-loader";
 import { savePortfolio } from "../utils/portfolio-writer";
 import {
@@ -12,8 +18,6 @@ import {
   applyTrades,
   buildDiff,
   mergePortfolio,
-  type FundDailyReturn,
-  type TradeOperation,
   type HoldingDiff,
 } from "../utils/portfolio-updater";
 
@@ -33,6 +37,14 @@ export interface PortfolioUpdateResult {
   readonly missingFunds: readonly string[];
 }
 
+// ─── Agent 回复解析用 Schema ───
+
+/** 对象格式：{ tradeDate, funds } */
+const AgentReplyObjectSchema = z.object({
+  tradeDate: z.string().default(""),
+  funds: z.array(FundDailyReturnSchema),
+});
+
 // ─── Agent 回复解析 ───
 
 /**
@@ -41,6 +53,8 @@ export interface PortfolioUpdateResult {
  * 支持两种格式：
  * 1. 对象格式：{ tradeDate, funds: [...] }
  * 2. 回退数组格式：[{ fundCode, dailyReturn, ... }]（tradeDate 为空）
+ *
+ * 使用 Zod Schema 做运行时校验，确保数据完整性。
  *
  * @param text - Agent 原始回复文本
  * @returns 解析结果，解析失败返回 null
@@ -51,13 +65,10 @@ export function parseAgentUpdateReply(text: string): UpdateResponse | null {
 
   // 对象格式：{ tradeDate, funds }
   try {
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      const tradeDate = typeof parsed.tradeDate === "string" ? parsed.tradeDate : "";
-      const funds = Array.isArray(parsed.funds) ? (parsed.funds as FundDailyReturn[]) : [];
-      if (funds.length > 0) {
-        return { tradeDate, funds };
-      }
+    const parsed = JSON.parse(raw);
+    const result = AgentReplyObjectSchema.safeParse(parsed);
+    if (result.success && result.data.funds.length > 0) {
+      return { tradeDate: result.data.tradeDate, funds: result.data.funds };
     }
   } catch {
     // 继续尝试其他方式
@@ -67,9 +78,10 @@ export function parseAgentUpdateReply(text: string): UpdateResponse | null {
   const arrayMatch = raw.match(/\[\s*\{[\s\S]*?\}\s*\]/);
   if (arrayMatch) {
     try {
-      const funds = JSON.parse(arrayMatch[0]) as FundDailyReturn[];
-      if (funds.length > 0) {
-        return { tradeDate: "", funds };
+      const parsed = JSON.parse(arrayMatch[0]);
+      const result = z.array(FundDailyReturnSchema).safeParse(parsed);
+      if (result.success && result.data.length > 0) {
+        return { tradeDate: "", funds: result.data };
       }
     } catch {
       // 解析失败

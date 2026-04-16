@@ -1,20 +1,4 @@
-import type { HoldingItem, Portfolio } from "../domain";
-
-/** 基金每日涨跌数据（从 MCP 获取） */
-export interface FundDailyReturn {
-  readonly fundCode: string;
-  /** 日涨跌幅（小数，如 0.0123 表示 +1.23%） */
-  readonly dailyReturn: number;
-  readonly fundName?: string;
-}
-
-/** 用户操作记录 */
-export interface TradeOperation {
-  /** 基金代码 */
-  readonly fundCode: string;
-  /** 操作金额：正数加仓，负数减仓 */
-  readonly amount: number;
-}
+import type { HoldingItem, Portfolio, FundDailyReturn, TradeOperation } from "../domain";
 
 /** 单只基金更新前后对比 */
 export interface HoldingDiff {

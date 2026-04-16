@@ -6,25 +6,13 @@
  */
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
+import { FundDailyReturnSchema, TradeOperationSchema } from "../domain";
 import {
   computePortfolioUpdate,
   persistPortfolioUpdate,
   loadPortfolio,
   findLatestPortfolioFile,
 } from "./portfolio-update.service";
-
-/** 基金涨跌数据 Schema */
-const FundDailyReturnSchema = z.object({
-  fundCode: z.string().describe("基金代码"),
-  dailyReturn: z.number().describe("日涨跌幅（小数形式，如 0.0123 表示 +1.23%）"),
-  fundName: z.string().optional().describe("基金名称"),
-});
-
-/** 交易操作 Schema */
-const TradeOperationSchema = z.object({
-  fundCode: z.string().describe("基金代码"),
-  amount: z.number().describe("操作金额（正数加仓，负数减仓）"),
-});
 
 /** UpdatePortfolioFile 工具输入 Schema */
 const UpdatePortfolioInputSchema = z.object({

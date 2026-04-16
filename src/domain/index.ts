@@ -13,3 +13,15 @@ export {
   type TargetAllocationItem,
   type Portfolio,
 } from "./schemas/portfolio.schema";
+export {
+  FundDailyReturnSchema,
+  TradeOperationSchema,
+  AgentUpdateResponseSchema,
+  type FundDailyReturn,
+  type TradeOperation,
+  type AgentUpdateResponse,
+} from "./schemas/trade.schema";
+export {
+  StrategySchema,
+  type Strategy,
+} from "./schemas/strategy.schema";
