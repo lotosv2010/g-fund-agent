@@ -126,8 +126,9 @@ src/
 
 | 文档 | 说明 |
 |------|------|
-| [PRODUCT.md](docs/PRODUCT.md) | 产品范围 |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | 架构设计 |
+| [SPEC.md](docs/SPEC.md) | 产品规格说明 |
+| [DESIGN.md](docs/DESIGN.md) | 视觉与交互设计规范 |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | 技术架构设计 |
 | [CURRENT.md](docs/tasks/CURRENT.md) | 任务跟踪 |
 
 ## 免责声明
