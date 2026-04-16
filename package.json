@@ -1,33 +1,39 @@
 {
   "name": "g-fund-agent",
-  "version": "1.0.0",
+  "version": "0.1.0",
+  "description": "Personal fund assistant powered by DeepAgents + LangGraph + Qieman MCP",
   "type": "module",
-  "description": "基金持仓自动分析 Agent，纯规则驱动",
-  "main": "dist/index.js",
   "scripts": {
     "dev": "langgraphjs dev --port 2024",
-    "build": "langgraphjs build",
+    "build": "langgraphjs build -t g-fund-agent",
     "up": "langgraphjs up",
-    "down": "langgraphjs down"
+    "deploy": "langgraphjs deploy",
+    "cli": "tsx src/cli.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
+    "@inquirer/prompts": "^8.4.1",
+    "@langchain/anthropic": "^1.3.26",
     "@langchain/core": "^1.1.32",
+    "@langchain/deepseek": "^1.0.24",
+    "@langchain/google": "^0.1.10",
     "@langchain/langgraph": "^1.2.2",
     "@langchain/mcp-adapters": "^1.1.3",
     "@langchain/ollama": "^1.2.6",
-    "deepagents": "^1.8.6",
+    "@langchain/openai": "^1.4.4",
+    "chalk": "^5.6.2",
+    "deepagents": "^1.8.4",
     "dotenv": "^17.3.1",
     "langchain": "^1.2.32",
-    "ollama": "^0.6.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@langchain/langgraph-cli": "^1.1.15",
-    "@types/node": "^25.5.0",
-    "tsx": "^4.19.0",
+    "@types/node": "^25.6.0",
+    "ts-node": "^10.9.0",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.2"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

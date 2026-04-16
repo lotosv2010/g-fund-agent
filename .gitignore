@@ -2,7 +2,12 @@ node_modules/
 dist/
 .env
 *.log
-pnpm-lock.yaml
+.DS_Store
+
+# 用户持仓数据（含个人投资信息，不提交）
+data/portfolio.json
+data/portfolio-*.json
+!data/portfolio.xxxx-xx-xx.json
 
 # LangGraph API
 .langgraph_api

@@ -1,143 +1,135 @@
 # G-Fund-Agent
 
-基金持仓自动分析 Agent。根据预设规则分析持仓基金，判断是否需要调仓并输出建议。
+面向个人投资者的基金顾投 AI 助手。基于 DeepAgents + LangGraph，支持多模型 LLM，通过且慢 MCP 获取基金数据。
 
-**核心原则：纯规则驱动，禁止 LLM 主观判断。**
+## 功能
 
-## 核心功能
-
-### Phase 0：规则引擎基础
-- **纯规则驱动**: 所有买卖决策由配置规则触发，LLM 仅用于数据获取和报告生成
-- **多源数据**: 通过 MCP 接口实时获取基金净值数据（qieman / 且慢）
-- **分类策略**: 按 5 类资产（宽基、科技、海外、债券、黄金）分别执行补仓/止盈规则
-- **智能高点**: 60日滚动窗口，超过60天未创新高自动重置，避免长期横盘导致规则失效
-- **精准止盈**: 按所有补仓点的加权平均成本计算止盈基准，多次补仓时更准确
-- **档位去重**: 同一档位不会重复触发，只有更高档位或状态重置后才会再次触发
-- **债券弹药库**: 深度下跌时自动触发债券减仓为补仓提供资金
-
-### Phase 1：数据聚合 + 风控层
-- **多维数据**: 聚合宏观指标、市场情绪等多源数据（当前MVP阶段）
-- **三层风控**: 回撤控制 + 集中度检查 + 流动性预警
-- **风险阻断**: 自动阻止超过止损线或高风险的建议
-- **定时触发**: 支持 cron 定时运行（双周周四/每月13号/自定义）
-
-### Phase 2：策略抽象层
-- **可插拔策略**: 策略注册表，支持多策略并行运行
-- **LLM 信号增强**: 基于市场环境调整规则信号强度（可选）
-- **信号合并**: 规则信号 + LLM 信号协同，加权平均置信度
-- **策略版本管理**: 自动存档策略配置，参数变更可追溯
-- **全程追踪**: 所有决策可通过 LangSmith 追踪审计
-
-## 目标仓位
-
-| 资产类别 | 目标占比 | 包含基金 |
-|----------|----------|----------|
-| 宽基类 | 35% | 沪深300、A500、创业板 |
-| 科技主题类 | 15% | 人工智能、半导体、机器人 |
-| 海外类 | 15% | 标普500、纳斯达克科技、中概互联 |
-| 债券（弹药库） | 30% | 华泰柏瑞纯债、裕祥回报债券 |
-| 黄金 | 5% | 华安黄金ETF |
+- **查看持仓** — 获取基金信息和净值，表格展示
+- **分析持仓** — 多维度诊断（资产配置、行业集中度、相关性、风险、策略评估）
+- **更新持仓** — 自动获取涨跌幅，支持加仓/减仓记录，按交易日期保存
+- **自由对话** — 基金相关问答
 
 ## 快速开始
 
-详细步骤见 [docs/USAGE.md](./docs/USAGE.md)。
+### 1. 安装依赖
 
 ```bash
-# 1. 安装依赖
 pnpm install
-
-# 2. 配置环境变量
-cp .env.example .env
-# 编辑 .env 填入你的 API Key
-# 可选：设置 USE_STRATEGY_ENGINE=true 启用策略引擎（V2）
-
-# 3. 启动开发服务器
-pnpm dev
-
-# 4. 打开 LangSmith Studio
-# 访问控制台输出的 URL，输入"分析我的持仓并给出调仓建议"
 ```
 
-## 技术栈
+### 2. 配置环境变量
 
-| 项 | 值 |
-|----|-----|
-| 语言 | TypeScript |
-| 包管理 | pnpm |
-| AI 框架 | deepagents + langchain + @langchain/langgraph |
-| LLM | Ollama（本地模型） |
-| 数据源 | qieman MCP（且慢） |
-| CLI | langgraphjs |
-| 追踪 | LangSmith |
+```bash
+cp .env.example .env
+```
+
+编辑 `.env`，至少配置：
+- `QIEMAN_API_KEY` — 且慢 MCP API Key（必需，基金数据源）
+- 至少一个 LLM 的 API Key（如 `DEEPSEEK_API_KEY`、`GEMINI_API_KEY`，或使用本地 Ollama）
+
+### 3. 准备持仓数据
+
+复制模板并填入你的实际持仓：
+
+```bash
+cp data/portfolio.xxxx-xx-xx.json data/portfolio-2026-04-16.json
+```
+
+文件名格式：`portfolio-YYYY-MM-DD.json`（日期为数据对应的交易日）。
+
+### 4. 运行
+
+```bash
+# CLI 交互模式
+pnpm cli
+
+# LangGraph Studio（localhost:2024）
+pnpm dev
+```
+
+## 使用指南
+
+### CLI 模式
+
+启动后依次：
+1. **选择模型** — 从已配置的 LLM 中选择
+2. **选择功能** — 更新持仓 / 查看持仓 / 分析持仓 / 自由对话
+
+#### 更新持仓
+
+```
+? 选择功能: 更新持仓 — 拉取涨跌 + 记录操作
+数据来源: D:\...\data\portfolio-2026-04-15.json
+⠋ 思考中...
+已获取 13 只基金的涨跌数据，交易日: 2026-04-16
+? 2026-04-16 有加仓/减仓操作吗？ No
+
+持仓变更对比:
+  161631 融通人工智能指数(LOF  2557.38 → 2574.37  +0.66% (+16.99)  累计 +29.53%
+  ...
+  合计  49134.74 → 49195.89  +61.15
+
+? 确认保存更新？ Yes
+持仓数据已更新并保存到 D:\...\data\portfolio-2026-04-16.json
+```
+
+- 加仓/减仓输入格式：`基金代码 金额`（如 `161631 500` 或 `014320 -200`）
+- 同一交易日多次更新会覆盖当日文件，历史文件不受影响
+
+#### 分析持仓
+
+Agent 自动调用且慢 MCP 工具，从持仓概览、业绩表现、资产配置、行业集中度、基金相关性、组合风险、综合诊断等维度逐步分析，结合操作策略给出建议。
+
+#### 查看持仓
+
+获取各基金最新净值和近期收益，用表格展示。
+
+### LangGraph 模式
+
+通过 LangGraph Studio（`pnpm dev`）与 Agent 自然语言交互。直接输入：
+
+- "帮我更新持仓" — Agent 自动获取涨跌幅并调用 UpdatePortfolioFile 工具保存
+- "分析一下我的持仓" — Agent 自动执行多维度分析
+- "查看持仓概览" — Agent 获取数据并展示
+
+### 持仓文件说明
+
+```
+data/
+├── portfolio.xxxx-xx-xx.json   # 模板文件（提交到 git）
+├── portfolio-2026-04-15.json   # 历史记录（gitignored）
+├── portfolio-2026-04-16.json   # 最新数据（gitignored）
+└── strategy.json               # 操作策略
+```
+
+- 系统自动加载日期最新的 `portfolio-YYYY-MM-DD.json`
+- 更新时按涨跌幅数据对应的交易日期保存新文件
+- `strategy.json` 定义操作策略，分析时自动参考
 
 ## 项目结构
 
 ```
 src/
-├── agent.ts              # DeepAgent 主编排器（入口）
-├── models.ts             # LLM 模型配置
-├── agents/               # 子 Agent 和纯计算函数
-│   ├── analysis-engine.ts     # 分析引擎（集成风控层）
-│   ├── market-calculator.ts   # 市场计算（高点、涨跌幅）
-│   ├── rule-matcher.ts        # 规则匹配（档位触发判断）
-│   └── portfolio-optimizer.ts # 组合优化（建议生成）
-├── rules/                # 规则配置 + 基金注册表
-├── state/                # 类型定义 + 状态存储
-│   └── store.ts              # 补仓点、高点、触发档位持久化
-├── data/                 # 数据聚合层（Phase 1）
-│   ├── context.ts            # 市场上下文聚合
-│   └── providers/            # 数据源适配器
-│       ├── qieman.ts         # 且慢 MCP
-│       ├── macro.ts          # 宏观指标（MVP）
-│       └── sentiment.ts      # 市场情绪（MVP）
-├── risk/                 # 风控层（Phase 1）
-│   ├── index.ts              # 风控聚合器
-│   ├── drawdown.ts           # 回撤控制
-│   ├── concentration.ts      # 集中度检查
-│   └── liquidity.ts          # 流动性检查
-├── scheduler/            # 定时任务（Phase 1）
-│   └── config.ts             # Cron 配置
-├── strategies/           # 策略层（Phase 2）
-│   ├── types.ts              # 策略类型定义
-│   ├── registry.ts           # 策略注册表
-│   ├── grid-rebalance.ts     # 网格补仓策略
-│   ├── llm-signal.ts         # LLM 信号增强
-│   ├── version-manager.ts    # 策略版本管理
-│   └── index.ts              # 统一导出
-├── mcp/                  # qieman MCP 客户端
-└── utils/                # 工具函数
-
-data/                     # 运行时状态（已加入 .gitignore）
-├── buy-points.json       # 补仓点记录
-├── high-points.json      # 近期高点记录
-└── triggered-tiers.json  # 已触发档位记录
+  index.ts             # LangGraph 入口
+  cli.ts               # CLI 交互入口
+  bootstrap.ts         # 共享初始化（MCP + 自定义工具注册）
+  domain/              # 领域层（配置 + 错误 + Schema）
+  modules/
+    agent/             # DeepAgent 工厂 + Prompt
+    llm/               # 多模型注册表 + 工厂
+    mcp/               # MCP 客户端管理
+  services/            # 业务服务层（CLI / LangGraph 共享）
+  utils/               # 工具函数（加载、写入、计算）
 ```
 
 ## 文档
 
 | 文档 | 说明 |
 |------|------|
-| [AGENTS.md](./AGENTS.md) | 项目开发规范（AI 开发工具共用） |
-| [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | **架构设计文档（技术架构 + 业务流程）** |
-| [docs/PLAN.md](./docs/PLAN.md) | 开发规划和进度（Phase 0-4） |
-| [docs/USAGE.md](./docs/USAGE.md) | 使用说明和操作步骤 |
-| [docs/TESTING.md](./docs/TESTING.md) | 联调测试指南（Phase 0） |
-| [docs/SCHEDULING.md](./docs/SCHEDULING.md) | 定时运行配置指南（Phase 1） |
-| [docs/STRATEGY-GUIDE.md](./docs/STRATEGY-GUIDE.md) | **策略使用指南（Phase 2）** |
-| [docs/spec/SPEC.md](./docs/spec/SPEC.md) | 完整需求规格 |
-| [docs/HOME.md](./docs/HOME.md) | 操作首页（持仓总览、规则速查） |
-| [docs/portfolio.md](./docs/portfolio.md) | 当前持仓数据（自动更新） |
+| [PRODUCT.md](docs/PRODUCT.md) | 产品范围 |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | 架构设计 |
+| [CURRENT.md](docs/tasks/CURRENT.md) | 任务跟踪 |
 
-## 常用命令
+## 免责声明
 
-```bash
-pnpm dev          # 启动开发服务器 (port 2024)
-pnpm build        # 构建
-pnpm up           # 启动服务
-pnpm down         # 停止服务
-npx tsc --noEmit  # 类型检查
-```
-
-## License
-
-ISC
+所有分析和建议仅供参考，不构成投资建议。投资有风险，决策需谨慎。

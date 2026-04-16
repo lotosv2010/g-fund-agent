@@ -1,10 +1,8 @@
 {
   "node_version": "20",
   "graphs": {
-    "fund_agent": "./src/agent.ts:agent"
+    "agent": "./src/index.ts:agent"
   },
   "env": ".env",
-  "dependencies": [
-    "./src"
-  ]
+  "dependencies": ["./src"]
 }

@@ -1,0 +1,102 @@
+{
+  "name": "网格补仓止盈策略",
+  "principle": "不预测市场，用价格触发操作。跌到档位就买，涨到档位就卖。",
+  "ammoFund": {
+    "name": "华泰柏瑞纯债",
+    "role": "弹药库，日常不动，极端机会时动用",
+    "triggerRule": "其他任何资产触发第三档补仓时，卖出10%-20%债券仓位用于补仓",
+    "capRule": "债券仓位占比超30%时，卖出超出部分"
+  },
+  "categories": [
+    {
+      "name": "宽基类",
+      "funds": ["沪深300增强", "A500", "创业板"],
+      "buyTriggers": [
+        { "drawdown": -0.08, "action": "买入目标仓位的5%" },
+        { "drawdown": -0.15, "action": "再买入目标仓位的10%" },
+        { "drawdown": -0.25, "action": "再买入目标仓位的15%" }
+      ],
+      "sellTriggers": [
+        { "gain": 0.15, "action": "卖出1/3仓位" },
+        { "gain": 0.30, "action": "再卖出1/3仓位" },
+        { "gain": 0.50, "action": "卖出剩余1/3仓位" }
+      ]
+    },
+    {
+      "name": "科技主题类",
+      "funds": ["德邦半导体", "人工智能", "机器人"],
+      "buyTriggers": [
+        { "drawdown": -0.10, "action": "买入目标仓位的5%" },
+        { "drawdown": -0.20, "action": "再买入目标仓位的10%" },
+        { "drawdown": -0.30, "action": "再买入目标仓位的20%" }
+      ],
+      "sellTriggers": [
+        { "gain": 0.20, "action": "卖出1/3仓位" },
+        { "gain": 0.40, "action": "再卖出1/3仓位" },
+        { "gain": 0.60, "action": "卖出剩余1/3仓位" }
+      ]
+    },
+    {
+      "name": "海外类-标普500",
+      "funds": ["标普500"],
+      "buyTriggers": [
+        { "drawdown": -0.10, "action": "买入目标仓位的5%" },
+        { "drawdown": -0.15, "action": "再买入目标仓位的10%" },
+        { "drawdown": -0.20, "action": "再买入目标仓位的15%" }
+      ],
+      "sellTriggers": [
+        { "gain": 0.15, "action": "卖出1/3仓位" },
+        { "gain": 0.25, "action": "再卖出1/3仓位" },
+        { "gain": 0.35, "action": "卖出剩余1/3仓位" }
+      ]
+    },
+    {
+      "name": "海外类-纳斯达克科技",
+      "funds": ["纳斯达克科技"],
+      "buyTriggers": [
+        { "drawdown": -0.12, "action": "买入目标仓位的5%" },
+        { "drawdown": -0.20, "action": "再买入目标仓位的10%" },
+        { "drawdown": -0.30, "action": "再买入目标仓位的15%" }
+      ],
+      "sellTriggers": [
+        { "gain": 0.20, "action": "卖出1/3仓位" },
+        { "gain": 0.35, "action": "再卖出1/3仓位" },
+        { "gain": 0.50, "action": "卖出剩余1/3仓位" }
+      ]
+    },
+    {
+      "name": "海外类-中概互联",
+      "funds": ["中概互联"],
+      "buyTriggers": [
+        { "drawdown": -0.15, "action": "买入目标仓位的8%" },
+        { "drawdown": -0.25, "action": "再买入目标仓位的12%" },
+        { "drawdown": -0.35, "action": "再买入目标仓位的15%" }
+      ],
+      "sellTriggers": [
+        { "gain": 0.25, "action": "卖出1/3仓位" },
+        { "gain": 0.40, "action": "再卖出1/3仓位" },
+        { "gain": 0.60, "action": "卖出剩余1/3仓位" }
+      ]
+    },
+    {
+      "name": "黄金",
+      "funds": ["华安黄金ETF联接"],
+      "buyTriggers": [
+        { "drawdown": -0.12, "action": "买入目标仓位的5%" },
+        { "drawdown": -0.20, "action": "再买入目标仓位的10%" },
+        { "drawdown": -0.30, "action": "再买入目标仓位的15%" }
+      ],
+      "sellTriggers": [
+        { "gain": 0.20, "action": "卖出1/2仓位" },
+        { "gain": 0.35, "action": "卖出剩余1/2仓位" }
+      ]
+    }
+  ],
+  "disciplineRules": [
+    "德邦半导体移动止盈：从最高点回撤超8%时，卖出1/3",
+    "单只基金仓位不得超过目标占比5%以上",
+    "科技股总仓位（半导体+人工智能+机器人）不得超过25%",
+    "债券仓位低于15%时，暂停所有补仓，先攒弹药",
+    "禁止情绪化操作：大涨追高、大跌割肉"
+  ]
+}

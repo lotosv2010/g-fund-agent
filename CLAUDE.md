@@ -1,33 +1,32 @@
-# CLAUDE.md — Claude Code 专属指令
+# G-Fund-Agent — 顾投 AI 助手
 
-完整项目规范见 [AGENTS.md](./AGENTS.md)，以下为 Claude Code 补充指令。
+## 项目定位
 
-## 工作方式
+面向个人投资者的基金顾投 AI 助手，基于 DeepAgents + LangGraph + 多模型 LLM，通过且慢 MCP 获取基金数据。
 
-- 修改代码前先读取相关文件，理解上下文
-- 修改后运行 `npx tsc --noEmit` 验证类型
-- 不要主动 commit，等用户指示
+## 技术栈
 
-## 关键文件速查
+- TypeScript (strict) + Zod v4
+- DeepAgents + LangGraph（Agent 编排）
+- 多模型 LLM（DeepSeek / Gemini / Moonshot / MiniMax / Ollama）
+- 且慢 MCP（@langchain/mcp-adapters）
+- LangSmith（可观测性）
 
-| 要做什么 | 看哪个文件 |
-|----------|-----------|
-| 理解架构设计 | `docs/ARCHITECTURE.md` |
-| 理解业务规则 | `docs/spec/SPEC.md` |
-| 查看开发进度 | `docs/PLAN.md` |
-| 查看当前持仓 | `docs/portfolio.md` |
-| 改基金列表 | `docs/portfolio.md`（推荐）或 `src/rules/fund-registry.ts`（兜底） |
-| 改补仓/止盈阈值 | `src/rules/rules-config.ts` |
-| 改 Agent 编排 | `src/agent.ts` |
-| 改分析引擎 | `src/agents/analysis-engine.ts`（三个纯计算函数的入口） |
-| 改市场计算逻辑 | `src/agents/market-calculator.ts`（高点、涨跌幅计算） |
-| 改规则匹配逻辑 | `src/agents/rule-matcher.ts`（补仓/止盈档位判断） |
-| 改组合优化逻辑 | `src/agents/portfolio-optimizer.ts`（建议生成、债券联动） |
-| 改状态存储 | `src/state/store.ts`（补仓点、高点、触发档位） |
-| 改数据聚合 | `src/data/context.ts`（市场上下文） |
-| 改数据源适配 | `src/data/providers/`（宏观、情绪指标） |
-| 改风控逻辑 | `src/risk/`（回撤、集中度、流动性） |
-| 改定时配置 | `src/scheduler/config.ts`（cron表达式） |
-| 改子 Agent | `src/agents/data-fetcher.ts` 或 `reporter.ts` |
-| 改 MCP 配置 | `src/mcp/client.ts` |
-| 改 LLM 模型 | `src/models.ts` |
+## 核心规则
+
+1. Tool I/O 必须 Zod Schema 定义，禁止裸类型
+2. `domain/` 零外部依赖（Zod 除外），模块间不直接 import
+3. 基金数据统一走且慢 MCP，不自建爬虫
+4. 禁止 `any` / `@ts-ignore` / 硬编码密钥
+5. 模块代码禁止 `console.log`（CLI 入口例外）
+6. 代码注释和项目文档统一使用中文
+7. **禁止自动提交 Git** — 不主动执行 git commit/push，由用户手动触发
+8. 编码细则见 `.claude/rules/coding.md`
+
+## 开发流程
+
+1. 查阅 `docs/tasks/CURRENT.md` 确认优先级
+2. 查阅 `docs/PRODUCT.md`（需求边界）+ `docs/ARCHITECTURE.md`（技术约束）
+3. 编写代码 → 遵循 `.claude/rules/coding.md`
+4. 新增模块必须包含 `index.ts` 作为唯一出口
+5. 更新 `docs/tasks/CURRENT.md` 任务状态
