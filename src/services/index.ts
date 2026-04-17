@@ -12,6 +12,7 @@ export {
   findLatestPortfolioFile,
   type UpdateResponse,
   type PortfolioUpdateResult,
+  type PortfolioFileInfo,
   type FundDailyReturn,
   type TradeOperation,
   type HoldingDiff,

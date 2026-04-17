@@ -8,14 +8,23 @@ const DATA_DIR = resolve("data");
 /** 持仓文件名匹配模式：portfolio-YYYY-MM-DD.json */
 const PORTFOLIO_FILE_PATTERN = /^portfolio-(\d{4}-\d{2}-\d{2})\.json$/;
 
+/** 持仓文件查找结果 */
+export interface PortfolioFileInfo {
+  /** 文件绝对路径 */
+  readonly path: string;
+  /** 文件名中的日期（YYYY-MM-DD），即该快照对应的交易日 */
+  readonly date: string;
+}
+
 /**
  * 查找 data/ 目录下最新的持仓文件。
  *
  * 按文件名中的日期降序排序，返回最新的一条。
+ * 日期代表该持仓快照对应的交易日（收盘后状态）。
  *
- * @returns 最新持仓文件的绝对路径，未找到时返回 null
+ * @returns 最新持仓文件信息，未找到时返回 null
  */
-export function findLatestPortfolioFile(): string | null {
+export function findLatestPortfolioFile(): PortfolioFileInfo | null {
   let files: string[];
   try {
     files = readdirSync(DATA_DIR, { encoding: "utf-8" });
@@ -31,7 +40,9 @@ export function findLatestPortfolioFile(): string | null {
     .filter((item): item is { file: string; date: string } => item !== null)
     .sort((a, b) => b.date.localeCompare(a.date));
 
-  return dated.length > 0 ? resolve(DATA_DIR, dated[0].file) : null;
+  if (dated.length === 0) return null;
+
+  return { path: resolve(DATA_DIR, dated[0].file), date: dated[0].date };
 }
 
 /**
@@ -42,21 +53,21 @@ export function findLatestPortfolioFile(): string | null {
  * @throws {ConfigError} 文件不存在或数据格式错误时抛出
  */
 export function loadPortfolio(): Portfolio {
-  const filePath = findLatestPortfolioFile();
+  const fileInfo = findLatestPortfolioFile();
 
-  if (!filePath) {
+  if (!fileInfo) {
     throw new ConfigError(
       "持仓文件不存在，请创建 data/portfolio-YYYY-MM-DD.json（参考 data/portfolio.example.json）"
     );
   }
 
-  const raw = readFileSync(filePath, "utf-8");
+  const raw = readFileSync(fileInfo.path, "utf-8");
 
   let json: unknown;
   try {
     json = JSON.parse(raw);
   } catch {
-    throw new ConfigError(`持仓文件 JSON 格式错误: ${filePath}`);
+    throw new ConfigError(`持仓文件 JSON 格式错误: ${fileInfo.path}`);
   }
 
   const result = PortfolioSchema.safeParse(json);

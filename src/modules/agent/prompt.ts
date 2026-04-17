@@ -21,7 +21,7 @@ const BASE_PROMPT = `你是一个专业的基金顾投 AI 助手。
 
 - 当用户要求"查看持仓"时：获取基金信息和净值，用表格展示数据即可，不做深度分析
 - 当用户要求"分析持仓"时：从持仓概览、业绩表现、资产配置、行业集中度、基金相关性、组合风险、综合诊断等维度逐步分析，如有操作策略则结合策略评估是否触发补仓/止盈/纪律预警，给出具体操作建议；如无需操作则明确说明
-- 当用户要求"更新持仓"时：先通过 MCP 工具获取各基金最近一个交易日的涨跌幅，确认交易日期，然后询问用户是否有加仓/减仓操作，最后调用 UpdatePortfolioFile 工具保存更新结果
+- 当用户要求"更新持仓"时：根据当前持仓数据日期，获取该日期之后最近一个交易日的涨跌幅（即下一个交易日），确认交易日期，然后询问用户是否有加仓/减仓操作，最后调用 UpdatePortfolioFile 工具保存更新结果
 
 ## 风险声明
 
@@ -73,17 +73,27 @@ export function buildViewInstruction(): string {
 /**
  * 构建"更新持仓"场景的用户指令（CLI 模式专用）。
  *
- * 要求 Agent 获取昨日涨跌幅并以 JSON 格式返回，
- * 便于程序解析后做持仓更新计算。
+ * 告知 Agent 当前持仓日期，要求获取该日期之后最近一个交易日的涨跌幅，
+ * 以 JSON 格式返回，便于程序解析后做持仓更新计算。
  *
  * @param fundCodes - 需要查询的基金代码列表
+ * @param portfolioDate - 当前持仓快照日期（YYYY-MM-DD），用于定位下一个交易日
  */
-export function buildUpdateInstruction(fundCodes: readonly string[]): string {
+export function buildUpdateInstruction(
+  fundCodes: readonly string[],
+  portfolioDate?: string,
+): string {
+  const dateHint = portfolioDate
+    ? `当前持仓数据日期为 ${portfolioDate}，请获取 ${portfolioDate} 之后最近一个交易日的涨跌幅数据。`
+    : "请获取最近一个交易日的涨跌幅数据。";
+
   return [
-    `请获取以下基金的最近一个交易日的涨跌幅数据：${fundCodes.join(", ")}`,
+    `${dateHint}`,
+    "",
+    `基金列表：${fundCodes.join(", ")}`,
     "",
     "要求：",
-    "1. 通过工具获取每只基金的最近一个交易日的涨跌幅（日涨跌率）",
+    "1. 通过工具获取每只基金在该交易日的涨跌幅（日涨跌率）",
     "2. 如果能获取到基金名称也一并返回",
     "3. 必须返回该涨跌幅对应的交易日期（tradeDate），格式为 YYYY-MM-DD",
     "4. 将结果严格按以下 JSON 格式返回，放在 ```json 代码块中：",
@@ -99,10 +109,11 @@ export function buildUpdateInstruction(fundCodes: readonly string[]): string {
     "",
     "注意：",
     "- tradeDate 是涨跌幅数据对应的交易日期，不是今天的日期",
+    `${portfolioDate ? `- tradeDate 必须晚于当前持仓日期 ${portfolioDate}` : ""}`,
     "- dailyReturn 为小数形式（如 1.23% 写为 0.0123，-0.5% 写为 -0.005）",
     "- 必须包含 ```json 代码块，便于程序解析",
     "- 只返回 JSON 数据，不需要其他分析",
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 }
 
 /**

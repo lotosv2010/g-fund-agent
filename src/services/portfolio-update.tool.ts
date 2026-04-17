@@ -33,7 +33,7 @@ const UpdatePortfolioInputSchema = z.object({
 export const updatePortfolioTool = tool(
   async (input) => {
     try {
-      const sourceFile = findLatestPortfolioFile();
+      const fileInfo = findLatestPortfolioFile();
       const portfolio = loadPortfolio();
       const { updatedHoldings, diffs, missingFunds } = computePortfolioUpdate(
         portfolio,
@@ -55,7 +55,7 @@ export const updatePortfolioTool = tool(
 
       return JSON.stringify({
         success: true,
-        sourceFile,
+        sourceFile: fileInfo?.path ?? "unknown",
         savedPath,
         tradeDate: input.tradeDate,
         summary: {

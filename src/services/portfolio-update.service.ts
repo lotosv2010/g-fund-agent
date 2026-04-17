@@ -167,5 +167,6 @@ export function persistPortfolioUpdate(
 
 // ─── 便捷函数 ───
 
-export { loadPortfolio, findLatestPortfolioFile };
+export { loadPortfolio, findLatestPortfolioFile } from "../utils/portfolio-loader";
+export type { PortfolioFileInfo } from "../utils/portfolio-loader";
 export type { FundDailyReturn, TradeOperation, HoldingDiff };

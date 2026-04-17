@@ -253,7 +253,7 @@ function printDiff(diffs: readonly HoldingDiff[]): void {
 /** 更新持仓主流程 */
 async function updatePortfolioFlow(agent: Agent): Promise<void> {
   // 1. 加载最新持仓文件
-  const sourceFile = findLatestPortfolioFile();
+  const fileInfo = findLatestPortfolioFile();
   let portfolio;
   try {
     portfolio = loadPortfolio();
@@ -263,11 +263,12 @@ async function updatePortfolioFlow(agent: Agent): Promise<void> {
     return;
   }
 
-  console.log(chalk.gray(`数据来源: ${sourceFile}`));
+  const portfolioDate = fileInfo?.date;
+  console.log(chalk.gray(`数据来源: ${fileInfo?.path ?? "未知"}（持仓日期: ${portfolioDate ?? "未知"}）`));
   const fundCodes = portfolio.holdings.map((h) => h.fundCode);
 
-  // 2. 通过 Agent 调用 MCP 获取涨跌幅
-  const reply = await invokeAgent(agent, buildUpdateInstruction(fundCodes));
+  // 2. 通过 Agent 调用 MCP 获取涨跌幅（传入持仓日期以定位下一个交易日）
+  const reply = await invokeAgent(agent, buildUpdateInstruction(fundCodes, portfolioDate));
   if (!reply) {
     console.error(`\n${chalk.red("获取涨跌数据失败: Agent 无回复")}\n`);
     return;
@@ -287,29 +288,41 @@ async function updatePortfolioFlow(agent: Agent): Promise<void> {
     return;
   }
 
+  // 4. 重复更新检测：tradeDate 不能早于或等于当前持仓日期
+  if (portfolioDate && tradeDate <= portfolioDate) {
+    console.log(chalk.yellow(
+      `持仓已包含 ${portfolioDate} 的数据，Agent 返回的交易日 ${tradeDate} 不晚于此日期。`
+    ));
+    const forceUpdate = await confirm({ message: "是否强制覆盖更新？", default: false });
+    if (!forceUpdate) {
+      console.log(chalk.gray("已跳过，持仓无需更新。"));
+      return;
+    }
+  }
+
   console.log(chalk.green(`已获取 ${funds.length} 只基金的涨跌数据，交易日: ${tradeDate}`));
 
-  // 4. 收集用户交易操作（CLI 交互）
+  // 5. 收集用户交易操作（CLI 交互）
   const trades = await collectTrades(fundCodes, tradeDate);
 
-  // 5. 计算更新（使用 service）
+  // 6. 计算更新（使用 service）
   const { updatedHoldings, diffs, missingFunds } = computePortfolioUpdate(portfolio, funds, trades);
 
   if (missingFunds.length > 0) {
     console.log(chalk.yellow(`以下基金未获取到涨跌数据，将保持原值: ${missingFunds.join(", ")}`));
   }
 
-  // 6. 展示变更对比
+  // 7. 展示变更对比
   printDiff(diffs);
 
-  // 7. 确认写入
+  // 8. 确认写入
   const shouldSave = await confirm({ message: "确认保存更新？", default: true });
   if (!shouldSave) {
     console.log(chalk.gray("已取消。"));
     return;
   }
 
-  // 8. 持久化（使用 service）
+  // 9. 持久化（使用 service）
   const savedPath = persistPortfolioUpdate(portfolio, updatedHoldings, tradeDate);
   console.log(chalk.green(`持仓数据已更新并保存到 ${savedPath}`));
 }
