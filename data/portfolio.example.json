@@ -1,0 +1,34 @@
+{
+  "name": "我的基金组合",
+  "target": 100000,
+  "holdings": [
+    { "fundCode": "161631", "amount": 2717.57, "returnRate": 0.3674, "costBasis": 1.9943 },
+    { "fundCode": "014320", "amount": 2668.32, "returnRate": 0.3397, "costBasis": 1.7096 },
+    { "fundCode": "020256", "amount": 3158.65, "returnRate": 0.0490, "costBasis": 1.4838 },
+    { "fundCode": "013316", "amount": 1282.21, "returnRate": 0.3513, "costBasis": 0.8413 },
+    { "fundCode": "004744", "amount": 2198.73, "returnRate": 0.4208, "costBasis": 2.5702 },
+    { "fundCode": "310318", "amount": 6264.71, "returnRate": 0.1603, "costBasis": 3.3439 },
+    { "fundCode": "022445", "amount": 3183.54, "returnRate": 0.1620, "costBasis": 1.0629 },
+    { "fundCode": "006328", "amount": 346185.33, "returnRate": -0.1236, "costBasis": 1.0970 },
+    { "fundCode": "096001", "amount": 1537.28, "returnRate": 0.0249, "costBasis": 2.6130 },
+    { "fundCode": "017093", "amount": 1796.77, "returnRate": 0.0569, "costBasis": 2.2727 },
+    { "fundCode": "000217", "amount": 712.87, "returnRate": 0.0147, "costBasis": 3.5595 },
+    { "fundCode": "000188", "amount": 17310.31, "returnRate": 0.0324, "costBasis": 1.1231 },
+    { "fundCode": "002351", "amount": 3988.03, "returnRate": 0.0045, "costBasis": 1.6147 }
+  ],
+  "targetAllocations": [
+    { "fundCode": "161631", "targetWeight": 5 },
+    { "fundCode": "014320", "targetWeight": 5 },
+    { "fundCode": "020256", "targetWeight": 5 },
+    { "fundCode": "013316", "targetWeight": 5 },
+    { "fundCode": "004744", "targetWeight": 10 },
+    { "fundCode": "310318", "targetWeight": 10 },
+    { "fundCode": "022445", "targetWeight": 10 },
+    { "fundCode": "006328", "targetWeight": 5 },
+    { "fundCode": "096001", "targetWeight": 5 },
+    { "fundCode": "017093", "targetWeight": 5 },
+    { "fundCode": "000217", "targetWeight": 5 },
+    { "fundCode": "000188", "targetWeight": 15 },
+    { "fundCode": "002351", "targetWeight": 15 }
+  ]
+}
