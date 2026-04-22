@@ -43,7 +43,14 @@ export function updateByDailyReturn(
       newReturnRate = round4((newNav - h.costBasis) / h.costBasis);
     }
 
-    return { ...h, fundName, amount: newAmount, returnRate: newReturnRate };
+    // 显式字段顺序：fundCode, fundName, amount, returnRate, costBasis
+    return {
+      fundCode: h.fundCode,
+      ...(fundName ? { fundName } : {}),
+      amount: newAmount,
+      ...(newReturnRate != null ? { returnRate: newReturnRate } : {}),
+      ...(h.costBasis != null ? { costBasis: h.costBasis } : {}),
+    };
   });
 }
 
@@ -86,14 +93,34 @@ export function applyTrades(
           (oldShares * h.costBasis + newShares * currentNav) / totalShares,
         );
         const newReturnRate = round4((currentNav - newCostBasis) / newCostBasis);
-        return { ...h, amount: newAmount, costBasis: newCostBasis, returnRate: newReturnRate };
+        // 显式字段顺序：fundCode, fundName, amount, returnRate, costBasis
+        return {
+          fundCode: h.fundCode,
+          ...(h.fundName ? { fundName: h.fundName } : {}),
+          amount: newAmount,
+          returnRate: newReturnRate,
+          costBasis: newCostBasis,
+        };
       }
 
-      return { ...h, amount: newAmount };
+      // 无 costBasis 时
+      return {
+        fundCode: h.fundCode,
+        ...(h.fundName ? { fundName: h.fundName } : {}),
+        amount: newAmount,
+        ...(h.returnRate != null ? { returnRate: h.returnRate } : {}),
+        ...(h.costBasis != null ? { costBasis: h.costBasis } : {}),
+      };
     } else {
       // 减仓：costBasis 不变
       const newAmount = round2(Math.max(0, h.amount + op.amount));
-      return { ...h, amount: newAmount };
+      return {
+        fundCode: h.fundCode,
+        ...(h.fundName ? { fundName: h.fundName } : {}),
+        amount: newAmount,
+        ...(h.returnRate != null ? { returnRate: h.returnRate } : {}),
+        ...(h.costBasis != null ? { costBasis: h.costBasis } : {}),
+      };
     }
   });
 }

@@ -1,7 +1,7 @@
 import type { DeepAgent, DeepAgentTypeConfig } from "deepagents";
 import type { StructuredToolInterface } from "@langchain/core/tools";
 import { validateEnv, type AppEnv } from "./domain";
-import { loadPortfolio, formatPortfolioContext } from "./utils/portfolio-loader";
+import { loadPortfolio, findLatestPortfolioFile, formatPortfolioContext } from "./utils/portfolio-loader";
 import { loadStrategy, formatStrategyContext } from "./utils/strategy-loader";
 import { getModel, type ModelId } from "./modules/llm";
 import { McpService } from "./modules/mcp";
@@ -42,8 +42,12 @@ function safeLoad<T>(loader: () => T, label: string): T | undefined {
 export async function bootstrap(modelId: ModelId): Promise<BootstrapResult> {
   const env: AppEnv = validateEnv();
 
+  const portfolioDate = safeLoad(
+    () => findLatestPortfolioFile()?.date,
+    "持仓日期",
+  );
   const portfolioContext = safeLoad(
-    () => formatPortfolioContext(loadPortfolio()),
+    () => formatPortfolioContext(loadPortfolio(), portfolioDate),
     "持仓数据",
   );
   const strategyContext = safeLoad(

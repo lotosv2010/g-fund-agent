@@ -106,9 +106,12 @@ function normalizeWeights(amounts: readonly number[]): number[] {
 /**
  * 将持仓数据格式化为 Agent 可读的文本。
  *
- * 包含预计算的归一化权重，Agent 调用 AnalyzePortfolioRisk 时直接使用。
+ * 包含持仓日期和预计算的归一化权重，Agent 调用 AnalyzePortfolioRisk 时直接使用。
+ *
+ * @param portfolio - 持仓数据
+ * @param portfolioDate - 持仓快照日期（YYYY-MM-DD），来自文件名
  */
-export function formatPortfolioContext(portfolio: Portfolio): string {
+export function formatPortfolioContext(portfolio: Portfolio, portfolioDate?: string): string {
   const amounts = portfolio.holdings.map((h) => h.amount);
   const totalAmount = amounts.reduce((sum, a) => sum + a, 0);
   const weights = normalizeWeights(amounts);
@@ -129,7 +132,10 @@ export function formatPortfolioContext(portfolio: Portfolio): string {
     })
     .join("\n");
 
+  const today = new Date().toISOString().slice(0, 10);
   let text = `## 用户持仓数据\n\n`;
+  text += `当前日期: ${today}\n`;
+  if (portfolioDate) text += `持仓数据日期: ${portfolioDate}\n`;
   if (portfolio.name) text += `组合名称: ${portfolio.name}\n`;
   if (portfolio.target) {
     const completionRate = ((totalAmount / portfolio.target) * 100).toFixed(1);
